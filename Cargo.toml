@@ -1,6 +1,19 @@
 [package]
 name = "bzd-users"
-version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bzd-lib = { git = "https://github.com/bez-dna/bzd-lib.git" }
+
+config = { version = "0.15.15", default-features = false, features = ["toml"] }
+tracing = "0.1.41"
+
+axum = "0.8.4"
+
+tokio = { version = "1.47.1", features = ["full"] }
+
+tonic = "0.14.1"
+tonic-health = "0.14.1"
+tonic-reflection = "0.14.1"
+
+serde = "1.0.219"
