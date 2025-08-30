@@ -2,11 +2,13 @@
 name = "bzd-users"
 edition = "2024"
 
-[dependencies]
-bzd-lib = { git = "https://github.com/bez-dna/bzd-lib.git" }
+[workspace]
+resolver = "3"
+members = ["lib/api"]
 
-config = { version = "0.15.15", default-features = false, features = ["toml"] }
-tracing = "0.1.41"
+[dependencies]
+bzd-users-api = { path = "lib/api" }
+bzd-lib = { git = "https://github.com/bez-dna/bzd-lib.git" }
 
 axum = "0.8.4"
 
@@ -17,3 +19,15 @@ tonic-health = "0.14.1"
 tonic-reflection = "0.14.1"
 
 serde = "1.0.219"
+serde_json = "1.0.143"
+
+sea-orm = { version = "1.1.14", features = [
+  "sqlx-postgres",
+  "runtime-tokio-rustls",
+] }
+
+config = { version = "0.15.15", default-features = false, features = ["toml"] }
+tracing = "0.1.41"
+uuid = { version = "1.18.0", features = ["v7"] }
+validator = { version = "0.20.0", features = ["derive"] }
+thiserror = "2.0.16"
