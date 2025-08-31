@@ -23,17 +23,17 @@ impl AuthService for GrpcAuthService {
 }
 
 async fn join(
-    AppState { settings, .. }: &AppState,
+    AppState { db, auth, .. }: &AppState,
     request: JoinRequest,
 ) -> Result<JoinResponse, AppError> {
-    let response = service::join(request.try_into()?).await?;
+    let response = service::join(db, auth, request.try_into()?).await?;
 
     Ok(response.into())
 }
 
 mod join {
-    use bzd_users_api::{JoinRequest, JoinResponse};
-    use serde_json::json;
+    use bzd_users_api::{JoinRequest, JoinResponse, join_response::Verification};
+    use sha2::{Digest as _, Sha256};
     use validator::Validate as _;
 
     use crate::app::{auth::service, error::AppError};
@@ -44,6 +44,10 @@ mod join {
         fn try_from(req: JoinRequest) -> Result<Self, Self::Error> {
             let data = Self {
                 phone_number: req.phone_number(),
+                phone_number_hash: format!(
+                    "{:x}",
+                    Sha256::digest(req.phone_number().to_ne_bytes())
+                ),
             };
 
             data.validate()?;
@@ -55,7 +59,9 @@ mod join {
     impl From<service::join::Response> for JoinResponse {
         fn from(res: service::join::Response) -> Self {
             JoinResponse {
-                response: Some(json!(res).to_string()),
+                verification: Some(Verification {
+                    verification_id: Some(res.verification.verification_id.into()),
+                }),
             }
         }
     }

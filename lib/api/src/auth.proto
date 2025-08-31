@@ -10,5 +10,9 @@ message JoinRequest {
 }
 
 message JoinResponse {
-    optional string response = 101;
+    optional Verification verification = 501;
+
+    message Verification {
+        optional string verification_id = 101;
+    }
 }

@@ -3,5 +3,9 @@
 [http]
 endpoint = "0.0.0.0:3000"
 
-# [db]
-# endpoint = "postgres://postgres:postgres@0.0.0.0:5432/bzd_users"
+[db]
+endpoint = "postgres://postgres:postgres@0.0.0.0:5432/bzd_users"
+
+[auth.verification]
+endpoint = "https://gatewayapi.telegram.org"
+access_token = "AAGJIw..."
