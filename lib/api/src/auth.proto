@@ -1,0 +1,18 @@
+syntax = "proto3";
+package bzd.users.auth;
+
+service AuthService {
+    rpc Join(JoinRequest) returns (JoinResponse);
+}
+
+message JoinRequest {
+    optional int64 phone_number = 101;
+}
+
+message JoinResponse {
+    optional Verification verification = 501;
+
+    message Verification {
+        optional string verification_id = 101;
+    }
+}
