@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use serde::Deserialize;
 
-use crate::app::auth::error::AuthError;
+use crate::app::error::AppError;
 
 #[derive(Clone)]
 pub struct VerificationClient {
@@ -22,7 +22,7 @@ impl VerificationClient {
         request_id: Option<String>,
         phone_number: i64,
         code: String,
-    ) -> Result<send::Result, AuthError> {
+    ) -> Result<send::Result, AppError> {
         let url = [
             self.settings.endpoint.clone(),
             "/sendVerificationMessage".into(),
@@ -32,6 +32,7 @@ impl VerificationClient {
             request_id,
             phone_number: phone_number.to_string(),
             access_token: self.settings.access_token.clone(),
+            sender_username: self.settings.sender_username.clone(),
             code,
         };
 
@@ -44,12 +45,9 @@ impl VerificationClient {
             .json::<send::Response>()
             .await?;
 
-        dbg!(&response);
-        // dbg!(&qq.text().await?);
-
         match response.result {
             Some(result) => Ok(result),
-            None => Err(AuthError::VerificationSend),
+            None => Err(AppError::VerificationSend),
         }
     }
 }
@@ -61,7 +59,8 @@ mod send {
     pub struct Request {
         pub request_id: Option<String>,
         pub phone_number: String,
-        pub access_token: String,
+        pub access_token: Option<String>,
+        pub sender_username: Option<String>,
         pub code: String,
     }
 
@@ -85,5 +84,6 @@ mod send {
 #[derive(Deserialize, Clone)]
 pub struct VerificationSettings {
     pub endpoint: String,
-    pub access_token: String,
+    pub access_token: Option<String>,
+    pub sender_username: Option<String>,
 }

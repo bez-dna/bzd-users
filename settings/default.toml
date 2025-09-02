@@ -8,4 +8,3 @@ endpoint = "postgres://postgres:postgres@0.0.0.0:5432/bzd_users"
 
 [auth.verification]
 endpoint = "https://gatewayapi.telegram.org"
-access_token = "AAGJIw..."

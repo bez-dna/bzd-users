@@ -14,7 +14,7 @@ pub struct AppState {
 
 impl AppState {
     pub async fn new(settings: AppSettings) -> Result<Self, Error> {
-        let auth = AuthState::new(&settings.auth);
+        let auth = AuthState::new(&settings.auth).await?;
 
         let opt = ConnectOptions::new(&settings.db.endpoint);
         let db = Arc::new(Database::connect(opt).await?);

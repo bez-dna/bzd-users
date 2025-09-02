@@ -1,4 +1,6 @@
-use bzd_users_api::{JoinRequest, JoinResponse, auth_service_server::AuthService};
+use bzd_users_api::{
+    CompleteRequest, CompleteResponse, JoinRequest, JoinResponse, auth_service_server::AuthService,
+};
 use tonic::{Request, Response, Status};
 
 use crate::app::{auth::service, error::AppError, state::AppState};
@@ -17,6 +19,15 @@ impl GrpcAuthService {
 impl AuthService for GrpcAuthService {
     async fn join(&self, req: Request<JoinRequest>) -> Result<Response<JoinResponse>, Status> {
         let res = join(&self.state, req.into_inner()).await?;
+
+        Ok(Response::new(res))
+    }
+
+    async fn complete(
+        &self,
+        req: Request<CompleteRequest>,
+    ) -> Result<Response<CompleteResponse>, Status> {
+        let res = complete(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -58,7 +69,7 @@ mod join {
 
     impl From<service::join::Response> for JoinResponse {
         fn from(res: service::join::Response) -> Self {
-            JoinResponse {
+            Self {
                 verification: Some(Verification {
                     verification_id: Some(res.verification.verification_id.into()),
                 }),
@@ -108,6 +119,62 @@ mod join {
                 })
                 .is_ok()
             );
+        }
+    }
+}
+
+async fn complete(
+    AppState { db, auth, .. }: &AppState,
+    request: CompleteRequest,
+) -> Result<CompleteResponse, AppError> {
+    let response = service::complete(db, auth, request.try_into()?).await?;
+
+    Ok(response.into())
+}
+
+mod complete {
+    use bzd_users_api::{CompleteRequest, CompleteResponse};
+    use uuid::Uuid;
+
+    use crate::app::{auth::service, error::AppError};
+
+    impl TryFrom<CompleteRequest> for service::complete::Request {
+        type Error = AppError;
+
+        fn try_from(req: CompleteRequest) -> Result<Self, Self::Error> {
+            let data = Self {
+                verification_id: Uuid::parse_str(req.verification_id())?,
+                code: req.code().into(),
+            };
+
+            Ok(data)
+        }
+    }
+
+    impl From<service::complete::Response> for CompleteResponse {
+        fn from(res: service::complete::Response) -> Self {
+            Self { jwt: Some(res.jwt) }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use bzd_users_api::CompleteRequest;
+        use uuid::Uuid;
+
+        use crate::app::{auth::service, error::AppError};
+
+        #[test]
+        fn convert_grpc_request_2_service() -> Result<(), AppError> {
+            let req = TryInto::<service::complete::Request>::try_into(CompleteRequest {
+                verification_id: Some(Uuid::now_v7().into()),
+                code: Some("1234".into()),
+            });
+
+            assert!(req.is_ok());
+            assert_eq!(req?.code, "1234");
+
+            Ok(())
         }
     }
 }
