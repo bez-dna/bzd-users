@@ -3,6 +3,7 @@ package bzd.users.auth;
 
 service AuthService {
     rpc Join(JoinRequest) returns (JoinResponse);
+    rpc Complete(CompleteRequest) returns (CompleteResponse);
 }
 
 message JoinRequest {
@@ -15,4 +16,13 @@ message JoinResponse {
     message Verification {
         optional string verification_id = 101;
     }
+}
+
+message CompleteRequest {
+    optional string verification_id = 101;
+    optional string code = 102;
+}
+
+message CompleteResponse {
+    optional string jwt = 101;
 }

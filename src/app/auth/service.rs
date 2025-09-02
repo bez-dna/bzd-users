@@ -1,8 +1,13 @@
+use chrono::{Duration, Utc};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rand::Rng as _;
-use sea_orm::{DbConn, sqlx::types::chrono::Utc};
+use sea_orm::DbConn;
 use uuid::Uuid;
 
-use crate::app::auth::{error::AuthError, repo, state::AuthState};
+use crate::app::{
+    auth::{Claims, repo, state::AuthState},
+    error::AppError,
+};
 
 pub async fn join(
     db: &DbConn,
@@ -11,7 +16,7 @@ pub async fn join(
         ..
     }: &AuthState,
     req: join::Request,
-) -> Result<join::Response, AuthError> {
+) -> Result<join::Response, AppError> {
     /*
     Не учитывается гонка, ну точнее будет pg ошибка на уникальном индексе и просто отлуп с ошибкой
     Нужно будет этот кейс в будущем поправить, но пока не крит, маловероятный кейс когда один
@@ -77,5 +82,65 @@ pub mod join {
     #[derive(Serialize)]
     pub struct Response {
         pub verification: verification::Model,
+    }
+}
+
+pub async fn complete(
+    db: &DbConn,
+    state: &AuthState,
+    req: complete::Request,
+) -> Result<complete::Response, AppError> {
+    let verification = repo::find_verification(db, req.verification_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    if verification.code != req.code {
+        return Err(AppError::VerificationCode);
+    }
+
+    let user = match repo::find_user_by_phone(db, verification.phone.clone()).await? {
+        Some(user) => user,
+        None => {
+            repo::create_user(
+                db,
+                repo::user::Model {
+                    user_id: Uuid::now_v7(),
+                    phone: verification.phone.clone(),
+                    name: None,
+                    locale: None,
+                    created_at: Utc::now().naive_utc(),
+                    updated_at: Utc::now().naive_utc(),
+                },
+            )
+            .await?
+        }
+    };
+
+    let claims = Claims {
+        sub: user.user_id,
+        exp: (Utc::now() + Duration::days(300)).timestamp().try_into()?,
+    };
+
+    let jwt = encode(
+        &Header::new(Algorithm::RS256),
+        &claims,
+        &EncodingKey::from_rsa_pem(&state.private_key)?,
+    )?;
+
+    repo::delete_verification(db, verification).await?;
+
+    Ok(complete::Response { jwt })
+}
+
+pub mod complete {
+    use uuid::Uuid;
+
+    pub struct Request {
+        pub verification_id: Uuid,
+        pub code: String,
+    }
+
+    pub struct Response {
+        pub jwt: String,
     }
 }

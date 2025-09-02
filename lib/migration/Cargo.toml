@@ -4,7 +4,6 @@ edition = "2024"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
-regex = { version = "1.11.2", default-features = false, features = ["std"] }
 
 [dependencies.sea-orm-migration]
 version = "1.1.0"
