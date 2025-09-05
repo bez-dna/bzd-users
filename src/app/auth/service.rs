@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::app::{
     auth::{Claims, repo, state::AuthState},
     error::AppError,
+    state::CryptoState,
 };
 
 pub async fn join(
@@ -15,6 +16,7 @@ pub async fn join(
         verification_client,
         ..
     }: &AuthState,
+    crypto: &CryptoState,
     req: join::Request,
 ) -> Result<join::Response, AppError> {
     /*
@@ -23,8 +25,10 @@ pub async fn join(
     нормальный юзер будет долбить ручку с N-устройств в одну секунду времени.
     */
 
+    let cipher_phone_number = crypto.encrypt(&req.phone_number.to_string())?;
+
     let verification =
-        match repo::find_verification_by_phone(db, req.phone_number_hash.clone()).await? {
+        match repo::find_verification_by_phone(db, cipher_phone_number.clone()).await? {
             /*
             request_id не передается в send, а это значит что на каждый вызов будет улетать новый запрос в тг,
             это может привести к тому, что можно всадить весь бюджет отправки кодов или задолбать жертву.
@@ -52,7 +56,7 @@ pub async fn join(
                     db,
                     repo::verification::Model {
                         verification_id: Uuid::now_v7(),
-                        phone: req.phone_number_hash,
+                        phone: cipher_phone_number,
                         code: code.to_string(),
                         request_id: verification_response.request_id,
                         created_at: Utc::now().naive_utc(),
@@ -76,7 +80,6 @@ pub mod join {
     pub struct Request {
         #[validate(range(min = 7_000_000_0000i64, max = 7_999_999_9999i64))]
         pub phone_number: i64,
-        pub phone_number_hash: String,
     }
 
     #[derive(Serialize)]

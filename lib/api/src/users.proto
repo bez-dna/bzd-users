@@ -1,0 +1,19 @@
+syntax = "proto3";
+package bzd.users.users;
+
+service UsersService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+message GetUserRequest {
+    optional string user_id = 101;
+}
+
+message GetUserResponse {
+    optional User user = 501;
+
+    message User {
+        optional string user_id = 101;
+        optional string name = 102;
+    }
+}

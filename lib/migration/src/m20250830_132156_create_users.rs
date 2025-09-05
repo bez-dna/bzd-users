@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
             .create_table(
                 table_auto(Users::Table)
                     .col(uuid(Users::UserId).primary_key())
-                    .col(text(Users::Phone))
+                    .col(binary(Users::Phone))
                     .col(text_null(Users::Name))
                     .col(text_null(Users::Locale))
                     .to_owned(),

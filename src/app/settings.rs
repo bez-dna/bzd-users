@@ -11,6 +11,13 @@ pub struct AppSettings {
     pub http: HttpSettings,
     pub auth: AuthSettings,
     pub db: DBSettings,
+    pub crypto: CryptoSettings,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct CryptoSettings {
+    pub key: String,
+    pub nonce: String,
 }
 
 impl Settings<AppSettings> for AppSettings {}

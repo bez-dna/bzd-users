@@ -20,7 +20,7 @@ pub async fn create_verification<T: ConnectionTrait>(
 
 pub async fn find_verification_by_phone<T: ConnectionTrait>(
     db: &T,
-    phone: String,
+    phone: Vec<u8>,
 ) -> Result<Option<verification::Model>, AppError> {
     let verification = verification::Entity::find()
         .filter(verification::Column::Phone.eq(phone))
@@ -59,7 +59,7 @@ pub async fn create_user<T: ConnectionTrait>(
 
 pub async fn find_user_by_phone<T: ConnectionTrait>(
     db: &T,
-    phone: String,
+    phone: Vec<u8>,
 ) -> Result<Option<user::Model>, AppError> {
     let user = user::Entity::find()
         .filter(user::Column::Phone.eq(phone))
