@@ -6,7 +6,7 @@ use serde::Serialize;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub verification_id: Uuid,
-    pub phone: String,
+    pub phone: Vec<u8>,
     pub code: String,
     pub request_id: String,
     pub created_at: DateTime,

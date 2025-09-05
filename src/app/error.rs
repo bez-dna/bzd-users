@@ -1,10 +1,12 @@
-use std::num::TryFromIntError;
+use std::{num::TryFromIntError, string::FromUtf8Error};
 
 use thiserror::Error;
 use tonic::Status;
 
 impl From<AppError> for Status {
     fn from(error: AppError) -> Self {
+        // TODO: нужно добавить принт ошбики в debug уровень
+
         match error {
             AppError::Validation(_) | AppError::VerificationCode => {
                 Self::invalid_argument(error.to_string())
@@ -31,6 +33,8 @@ pub enum AppError {
     Db(#[from] sea_orm::DbErr),
     #[error("UUID")]
     Uuid(#[from] uuid::Error),
+    #[error("AES")]
+    Aes,
     #[error("NOT_FOUND")]
     NotFound,
     #[error("VERIFICATION_SEND")]
@@ -41,6 +45,12 @@ pub enum AppError {
     Other,
 }
 
+impl From<aes_gcm::Error> for AppError {
+    fn from(_: aes_gcm::Error) -> Self {
+        Self::Aes
+    }
+}
+
 impl From<std::io::Error> for AppError {
     fn from(_: std::io::Error) -> Self {
         Self::Other
@@ -49,6 +59,12 @@ impl From<std::io::Error> for AppError {
 
 impl From<TryFromIntError> for AppError {
     fn from(_: TryFromIntError) -> Self {
+        Self::Other
+    }
+}
+
+impl From<FromUtf8Error> for AppError {
+    fn from(_: FromUtf8Error) -> Self {
         Self::Other
     }
 }

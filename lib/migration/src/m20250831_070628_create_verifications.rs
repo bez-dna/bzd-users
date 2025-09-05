@@ -12,8 +12,8 @@ impl MigrationTrait for Migration {
             .create_table(
                 table_auto(Verifications::Table)
                     .col(uuid(Verifications::VerificationId).primary_key())
-                    .col(text(Verifications::Phone))
-                    .col(integer(Verifications::Code))
+                    .col(binary(Verifications::Phone))
+                    .col(text(Verifications::Code))
                     .col(text(Verifications::RequestId))
                     .to_owned(),
             )

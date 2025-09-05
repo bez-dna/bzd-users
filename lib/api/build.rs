@@ -12,5 +12,9 @@ fn main() -> Result<(), Error> {
         .file_descriptor_set_path(out_dir.join("auth_descriptor.bin"))
         .compile_protos(&["src/auth.proto"], &["src"])?;
 
+    tonic_prost_build::configure()
+        .file_descriptor_set_path(out_dir.join("users_descriptor.bin"))
+        .compile_protos(&["src/users.proto"], &["src"])?;
+
     Ok(())
 }
