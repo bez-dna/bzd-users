@@ -4,6 +4,7 @@ mod entities;
 
 mod m20250830_132156_create_users;
 mod m20250831_070628_create_verifications;
+mod m20250911_163757_create_contacts;
 
 pub struct Migrator;
 
@@ -13,6 +14,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m20250830_132156_create_users::Migration),
             Box::new(m20250831_070628_create_verifications::Migration),
+            Box::new(m20250911_163757_create_contacts::Migration),
         ]
     }
 }
