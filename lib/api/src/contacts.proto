@@ -1,0 +1,20 @@
+syntax = "proto3";
+package bzd.users.contacts;
+
+service ContactsService {
+    rpc CreateContacts(CreateContactsRequest) returns (CreateContactsResponse);
+}
+
+message CreateContactsRequest {
+    optional string user_id = 101;
+
+    repeated Contact contacts = 501;
+
+    message Contact {
+        optional string phone_number = 101;
+        optional string name = 102;
+        optional string device_contact_id = 103;
+    }
+}
+
+message CreateContactsResponse {}

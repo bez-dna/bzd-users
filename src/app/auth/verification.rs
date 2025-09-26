@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
 use serde::Deserialize;
+use tracing::debug;
+use uuid::Uuid;
 
 use crate::app::error::AppError;
 
@@ -23,6 +25,16 @@ impl VerificationClient {
         phone_number: i64,
         code: String,
     ) -> Result<send::Result, AppError> {
+        if let Some(debug) = self.settings.debug
+            && debug
+        {
+            debug!("{} - {}", phone_number, code);
+
+            return Ok(send::Result {
+                request_id: Uuid::nil().into(),
+            });
+        }
+
         let url = [
             self.settings.endpoint.clone(),
             "/sendVerificationMessage".into(),
@@ -86,4 +98,5 @@ pub struct VerificationSettings {
     pub endpoint: String,
     pub access_token: Option<String>,
     pub sender_username: Option<String>,
+    pub debug: Option<bool>,
 }

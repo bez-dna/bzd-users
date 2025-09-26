@@ -17,3 +17,13 @@ pub enum Verifications {
     Code,
     RequestId,
 }
+
+#[derive(DeriveIden)]
+pub enum Contacts {
+    Table,
+    ContactId,
+    UserId,
+    Phone,
+    Name,
+    DeviceContactId,
+}

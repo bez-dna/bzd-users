@@ -1,4 +1,7 @@
-use std::{num::TryFromIntError, string::FromUtf8Error};
+use std::{
+    num::{ParseIntError, TryFromIntError},
+    string::FromUtf8Error,
+};
 
 use thiserror::Error;
 use tonic::Status;
@@ -59,6 +62,12 @@ impl From<std::io::Error> for AppError {
 
 impl From<TryFromIntError> for AppError {
     fn from(_: TryFromIntError) -> Self {
+        Self::Other
+    }
+}
+
+impl From<ParseIntError> for AppError {
+    fn from(_: ParseIntError) -> Self {
         Self::Other
     }
 }

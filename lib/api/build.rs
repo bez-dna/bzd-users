@@ -13,6 +13,10 @@ fn main() -> Result<(), Error> {
         .compile_protos(&["src/auth.proto"], &["src"])?;
 
     tonic_prost_build::configure()
+        .file_descriptor_set_path(out_dir.join("contacts_descriptor.bin"))
+        .compile_protos(&["src/contacts.proto"], &["src"])?;
+
+    tonic_prost_build::configure()
         .file_descriptor_set_path(out_dir.join("users_descriptor.bin"))
         .compile_protos(&["src/users.proto"], &["src"])?;
 
