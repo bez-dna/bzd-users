@@ -1,0 +1,29 @@
+syntax = "proto3";
+package bzd.users.sources;
+
+service SourcesService {
+    rpc GetSources(GetSourcesRequest) returns (GetSourcesResponse);
+    rpc CreateSource(CreateSourceRequest) returns (CreateSourceResponse);
+}
+
+message CreateSourceRequest {
+    optional string user_id = 101;
+    optional string source_user_id = 102;
+}
+
+message CreateSourceResponse {
+    optional string source_id = 101;
+}
+
+message GetSourcesRequest {
+    optional string user_id = 101;
+}
+
+message GetSourcesResponse {
+    optional Source source = 501;
+
+    message Source {
+        optional string source_user_id = 101;
+        optional string name = 102;
+    }
+}

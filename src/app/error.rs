@@ -3,6 +3,7 @@ use std::{
     string::FromUtf8Error,
 };
 
+use sea_orm::DbErr;
 use thiserror::Error;
 use tonic::Status;
 
@@ -15,6 +16,10 @@ impl From<AppError> for Status {
                 Self::invalid_argument(error.to_string())
             }
             AppError::NotFound => Self::not_found(error.to_string()),
+            AppError::Db(db_error) => match db_error {
+                DbErr::RecordNotFound(_) => Self::not_found(""),
+                _ => Self::internal(""),
+            },
             _ => Self::internal(error.to_string()),
         }
     }
