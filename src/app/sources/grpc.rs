@@ -1,6 +1,6 @@
 use bzd_users_api::{
     CreateSourceRequest, CreateSourceResponse, GetSourcesRequest, GetSourcesResponse,
-    sources_service_server::SourcesService,
+    get_sources_response::Contact, sources_service_server::SourcesService,
 };
 use tonic::{Request, Response, Status};
 
@@ -38,30 +38,42 @@ impl SourcesService for GrpcSourcesService {
 }
 
 async fn get_sources(
-    AppState { db, .. }: &AppState,
+    AppState { db, crypto, .. }: &AppState,
     req: GetSourcesRequest,
 ) -> Result<GetSourcesResponse, AppError> {
     let res = service::get_sources(db, req.try_into()?).await?;
 
-    Ok(res.into())
+    let contacts = res
+        .contacts
+        .into_iter()
+        .map(|(contact, user)| {
+            Ok(Contact {
+                user_id: Some(user.user_id.into()),
+                name: Some(contact.name),
+                phone_number: Some(crypto.decrypt(&user.phone)?),
+            })
+        })
+        .collect::<Result<Vec<Contact>, AppError>>()?;
+
+    Ok(GetSourcesResponse {
+        sources: vec![],
+        contacts,
+    })
 }
 
 mod get_sources {
-    use bzd_users_api::{GetSourcesRequest, GetSourcesResponse};
+    use bzd_users_api::GetSourcesRequest;
+    use uuid::Uuid;
 
     use crate::app::{error::AppError, sources::service};
 
     impl TryFrom<GetSourcesRequest> for service::get_sources::Request {
         type Error = AppError;
 
-        fn try_from(_req: GetSourcesRequest) -> Result<Self, Self::Error> {
-            Ok(Self {})
-        }
-    }
-
-    impl From<service::get_sources::Response> for GetSourcesResponse {
-        fn from(_res: service::get_sources::Response) -> Self {
-            Self { source: None }
+        fn try_from(req: GetSourcesRequest) -> Result<Self, Self::Error> {
+            Ok(Self {
+                user_id: Uuid::parse_str(req.user_id())?,
+            })
         }
     }
 }
