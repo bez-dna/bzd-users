@@ -136,7 +136,7 @@ pub mod complete {
     pub struct Request {
         pub verification_id: Uuid,
         pub code: String,
-        #[validate(length(min = 3))]
+        #[validate(length(min = 2))]
         pub name: Option<String>,
     }
 
