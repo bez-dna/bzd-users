@@ -49,6 +49,8 @@ pub enum AppError {
     VerificationSend,
     #[error("VERIFICATION_CODE")]
     VerificationCode,
+    #[error("COMPLETE_NAME")]
+    CompleteName,
     #[error("OTHER")]
     Other,
 }

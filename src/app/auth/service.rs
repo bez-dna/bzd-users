@@ -2,7 +2,6 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rand::Rng as _;
 use sea_orm::DbConn;
-use uuid::Uuid;
 
 use crate::app::{
     auth::{Claims, repo, state::AuthState},
@@ -104,18 +103,12 @@ pub async fn complete(
     let user = match repo::find_user_by_phone(db, verification.phone.clone()).await? {
         Some(user) => user,
         None => {
-            repo::create_user(
-                db,
-                repo::user::Model {
-                    user_id: Uuid::now_v7(),
-                    phone: verification.phone.clone(),
-                    name: None,
-                    locale: None,
-                    created_at: Utc::now().naive_utc(),
-                    updated_at: Utc::now().naive_utc(),
-                },
-            )
-            .await?
+            if let Some(name) = req.name {
+                repo::create_user(db, repo::user::Model::new(verification.phone.clone(), name))
+                    .await?
+            } else {
+                return Err(AppError::CompleteName);
+            }
         }
     };
 
@@ -137,10 +130,14 @@ pub async fn complete(
 
 pub mod complete {
     use uuid::Uuid;
+    use validator::Validate;
 
+    #[derive(Validate)]
     pub struct Request {
         pub verification_id: Uuid,
         pub code: String,
+        #[validate(length(min = 3))]
+        pub name: Option<String>,
     }
 
     pub struct Response {

@@ -134,6 +134,7 @@ async fn complete(
 mod complete {
     use bzd_users_api::{CompleteRequest, CompleteResponse};
     use uuid::Uuid;
+    use validator::Validate;
 
     use crate::app::{auth::service, error::AppError};
 
@@ -144,7 +145,10 @@ mod complete {
             let data = Self {
                 verification_id: Uuid::parse_str(req.verification_id())?,
                 code: req.code().into(),
+                name: req.name,
             };
+
+            data.validate()?;
 
             Ok(data)
         }
@@ -168,10 +172,19 @@ mod complete {
             let req = TryInto::<service::complete::Request>::try_into(CompleteRequest {
                 verification_id: Some(Uuid::now_v7().into()),
                 code: Some("1234".into()),
+                name: Some("NAME".into()),
             });
 
             assert!(req.is_ok());
             assert_eq!(req?.code, "1234");
+
+            let req = TryInto::<service::complete::Request>::try_into(CompleteRequest {
+                verification_id: Some(Uuid::now_v7().into()),
+                code: Some("1234".into()),
+                name: Some("".into()),
+            });
+
+            assert!(!req.is_ok());
 
             Ok(())
         }

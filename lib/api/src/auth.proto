@@ -23,6 +23,7 @@ message JoinResponse {
 message CompleteRequest {
     optional string verification_id = 101;
     optional string code = 102;
+    optional string name = 103;
 }
 
 message CompleteResponse {
