@@ -7,8 +7,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub user_id: Uuid,
     pub phone: Vec<u8>,
-    pub name: Option<String>,
-    pub locale: Option<String>,
+    pub name: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

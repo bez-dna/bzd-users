@@ -9,7 +9,6 @@ pub struct Model {
     pub user_id: Uuid,
     pub phone: Vec<u8>,
     pub name: String,
-    pub locale: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
@@ -23,7 +22,6 @@ impl Model {
             user_id,
             phone,
             name,
-            locale: None,
             created_at: now,
             updated_at: now,
         }
