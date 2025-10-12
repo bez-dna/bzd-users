@@ -71,7 +71,7 @@ mod join {
                     verification_id: Some(res.verification.verification_id.into()),
                 }),
 
-                is_new: Some(res.user.is_some()),
+                is_new: Some(res.user.is_none()),
             }
         }
     }
