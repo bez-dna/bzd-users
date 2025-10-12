@@ -70,6 +70,8 @@ mod join {
                 verification: Some(Verification {
                     verification_id: Some(res.verification.verification_id.into()),
                 }),
+
+                is_new: Some(res.user.is_some()),
             }
         }
     }

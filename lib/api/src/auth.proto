@@ -11,6 +11,8 @@ message JoinRequest {
 }
 
 message JoinResponse {
+    optional bool is_new = 101;
+
     optional Verification verification = 501;
 
     message Verification {
