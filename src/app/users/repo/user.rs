@@ -16,3 +16,13 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+// impl Model {
+//     fn abbr(&self) -> String {}
+// }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn check_abbr_trait() {}
+}

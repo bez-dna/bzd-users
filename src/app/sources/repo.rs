@@ -85,3 +85,15 @@ pub async fn find_contacts_by_user_id<T: ConnectionTrait>(
 
     Ok(contacts)
 }
+
+pub async fn find_sources_by_user_id<T: ConnectionTrait>(
+    db: &T,
+    user_id: Uuid,
+) -> Result<Vec<source::Model>, AppError> {
+    let sources = source::Entity::find()
+        .filter(source::Column::UserId.eq(user_id))
+        .all(db)
+        .await?;
+
+    Ok(sources)
+}

@@ -3,6 +3,7 @@ package bzd.users.users;
 
 service UsersService {
     rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
 }
 
 message GetUserRequest {
@@ -15,5 +16,19 @@ message GetUserResponse {
     message User {
         optional string user_id = 101;
         optional string name = 102;
+    }
+}
+
+message GetUsersRequest {
+    repeated string user_ids = 101;
+}
+
+message GetUsersResponse {
+    repeated User users = 501;
+
+    message User {
+        optional string user_id = 101;
+        optional string name = 102;
+        optional string phone = 103;
     }
 }

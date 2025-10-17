@@ -5,10 +5,10 @@ use serde::Serialize;
 #[sea_orm(table_name = "contacts")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
+    pub contact_id: Uuid,
     pub user_id: Uuid,
     pub phone: Vec<u8>,
     pub name: String,
-    // pub contact_user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

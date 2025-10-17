@@ -20,17 +20,16 @@ message GetSourcesRequest {
 }
 
 message GetSourcesResponse {
-    repeated Source sources = 501;
-    repeated Contact contacts = 502;
+    repeated Contact contacts = 501;
+    repeated Source sources = 502;
 
     message Source {
-        optional string source_user_id = 101;
-        optional string name = 102;
+        optional string source_id = 101;
+        optional string source_user_id = 102;
     }
 
     message Contact {
-        optional string user_id = 101;
-        optional string name = 102;
-        optional string phone_number = 103;
+        optional string contact_id = 101;
+        optional string contact_user_id = 102;
     }
 }

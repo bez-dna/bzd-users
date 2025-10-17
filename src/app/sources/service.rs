@@ -13,17 +13,21 @@ pub async fn get_sources(
         .map(|it| it.user_id)
         .collect();
 
-    let contacts = repo::find_contacts_by_user_id(db, req.user_id)
+    let contacts_with_user = repo::find_contacts_by_user_id(db, req.user_id)
         .await?
         .into_iter()
-        .filter_map(|(contact, user)| match user {
-            Some(user) => Some((contact, user)),
-            None => None,
+        .filter_map(|(contact, user)| {
+            user.filter(|it| reverse_contact_ids.contains(&it.user_id))
+                .map(|user| get_sources::ContactWithUser { contact, user })
         })
-        .filter(|(_, user)| reverse_contact_ids.contains(&user.user_id))
         .collect();
 
-    Ok(get_sources::Response { contacts })
+    let sources = repo::find_sources_by_user_id(db, req.user_id).await?;
+
+    Ok(get_sources::Response {
+        sources,
+        contacts_with_user,
+    })
 }
 
 pub mod get_sources {
@@ -36,13 +40,14 @@ pub mod get_sources {
     }
 
     pub struct Response {
-        pub contacts: Vec<(repo::contact::Model, repo::user::Model)>,
+        pub contacts_with_user: Vec<ContactWithUser>,
+        pub sources: Vec<repo::source::Model>,
     }
 
-    // pub struct ContactWithUser {
-    //     pub contact: repo::contact::Model,
-    //     pub user: repo::user::Model,
-    // }
+    pub struct ContactWithUser {
+        pub contact: repo::contact::Model,
+        pub user: repo::user::Model,
+    }
 }
 
 pub async fn create_source(

@@ -1,6 +1,6 @@
 use bzd_users_api::{
     CreateSourceRequest, CreateSourceResponse, GetSourcesRequest, GetSourcesResponse,
-    get_sources_response::Contact, sources_service_server::SourcesService,
+    sources_service_server::SourcesService,
 };
 use tonic::{Request, Response, Status};
 
@@ -38,42 +38,62 @@ impl SourcesService for GrpcSourcesService {
 }
 
 async fn get_sources(
-    AppState { db, crypto, .. }: &AppState,
+    AppState { db, .. }: &AppState,
     req: GetSourcesRequest,
 ) -> Result<GetSourcesResponse, AppError> {
     let res = service::get_sources(db, req.try_into()?).await?;
 
-    let contacts = res
-        .contacts
-        .into_iter()
-        .map(|(contact, user)| {
-            Ok(Contact {
-                user_id: Some(user.user_id.into()),
-                name: Some(contact.name),
-                phone_number: Some(crypto.decrypt(&user.phone)?),
-            })
-        })
-        .collect::<Result<Vec<Contact>, AppError>>()?;
-
-    Ok(GetSourcesResponse {
-        sources: vec![],
-        contacts,
-    })
+    Ok(res.into())
 }
 
 mod get_sources {
-    use bzd_users_api::GetSourcesRequest;
-    use uuid::Uuid;
+    use bzd_users_api::{GetSourcesRequest, GetSourcesResponse, get_sources_response};
 
-    use crate::app::{error::AppError, sources::service};
+    use crate::app::{
+        error::AppError,
+        sources::{
+            repo,
+            service::{
+                self,
+                get_sources::{ContactWithUser, Response},
+            },
+        },
+    };
 
     impl TryFrom<GetSourcesRequest> for service::get_sources::Request {
         type Error = AppError;
 
         fn try_from(req: GetSourcesRequest) -> Result<Self, Self::Error> {
             Ok(Self {
-                user_id: Uuid::parse_str(req.user_id())?,
+                user_id: req.user_id().parse()?,
             })
+        }
+    }
+
+    impl From<Response> for GetSourcesResponse {
+        fn from(res: Response) -> Self {
+            Self {
+                contacts: res.contacts_with_user.into_iter().map(Into::into).collect(),
+                sources: res.sources.into_iter().map(Into::into).collect(),
+            }
+        }
+    }
+
+    impl From<ContactWithUser> for get_sources_response::Contact {
+        fn from(ContactWithUser { contact, user }: ContactWithUser) -> Self {
+            Self {
+                contact_id: Some(contact.contact_id.into()),
+                contact_user_id: Some(user.user_id.into()),
+            }
+        }
+    }
+
+    impl From<repo::source::Model> for get_sources_response::Source {
+        fn from(source: repo::source::Model) -> Self {
+            Self {
+                source_id: Some(source.source_id.into()),
+                source_user_id: Some(source.source_user_id.into()),
+            }
         }
     }
 }
