@@ -3,27 +3,25 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
-#[sea_orm(table_name = "verifications")]
+#[sea_orm(table_name = "sources")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub verification_id: Uuid,
-    pub phone: Vec<u8>,
-    pub code: String,
-    pub request_id: String,
+    pub source_id: Uuid,
+    pub user_id: Uuid,
+    pub source_user_id: Uuid,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
 
 impl Model {
-    pub fn new(phone: Vec<u8>, code: i32, request_id: String) -> Self {
+    pub fn new(user_id: Uuid, source_user_id: Uuid) -> Self {
         let now = Utc::now().naive_utc();
-        let verification_id = Uuid::now_v7();
+        let source_id = Uuid::now_v7();
 
         Self {
-            verification_id,
-            phone,
-            code: code.to_string(),
-            request_id,
+            source_id,
+            user_id,
+            source_user_id,
             created_at: now,
             updated_at: now,
         }

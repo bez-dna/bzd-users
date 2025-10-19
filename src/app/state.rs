@@ -59,9 +59,7 @@ impl CryptoState {
         Ok(self.cipher.encrypt(&self.nonce, text.as_bytes())?)
     }
 
-    // Пока не используется нигде в приложке, поэтому чисто для теста оставил
-    #[cfg(test)]
-    pub fn decrypt(&self, text: Vec<u8>) -> Result<String, AppError> {
+    pub fn decrypt(&self, text: &Vec<u8>) -> Result<String, AppError> {
         Ok(String::from_utf8(
             self.cipher.decrypt(&self.nonce, text.as_ref())?,
         )?)
@@ -85,7 +83,7 @@ mod tests {
         let text = String::from("TEXT_2_ENCRYPT");
         let cipher_text = state.encrypt(&text)?;
 
-        assert_eq!(text, state.decrypt(cipher_text)?);
+        assert_eq!(text, state.decrypt(&cipher_text)?);
 
         Ok(())
     }

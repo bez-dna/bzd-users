@@ -11,6 +11,7 @@ mod auth;
 mod contacts;
 mod error;
 mod settings;
+mod sources;
 mod state;
 mod users;
 
@@ -29,6 +30,7 @@ async fn http_and_grpc(state: &AppState) -> Result<(), Error> {
         .register_encoded_file_descriptor_set(bzd_users_api::AUTH_FILE_DESCRIPTOR_SET)
         .register_encoded_file_descriptor_set(bzd_users_api::USERS_FILE_DESCRIPTOR_SET)
         .register_encoded_file_descriptor_set(bzd_users_api::CONTACTS_FILE_DESCRIPTOR_SET)
+        .register_encoded_file_descriptor_set(bzd_users_api::SOURCES_FILE_DESCRIPTOR_SET)
         .build_v1alpha()?;
 
     let (_, health_service) = tonic_health::server::health_reporter();
@@ -41,6 +43,7 @@ async fn http_and_grpc(state: &AppState) -> Result<(), Error> {
         .add_service(auth::auth_service(state.clone()))
         .add_service(users::users_service(state.clone()))
         .add_service(contacts::contacts_service(state.clone()))
+        .add_service(sources::sources_service(state.clone()))
         .into_axum_router();
 
     let listener = tokio::net::TcpListener::bind(&state.settings.http.endpoint).await?;

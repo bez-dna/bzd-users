@@ -31,7 +31,7 @@ impl VerificationClient {
             debug!("{} - {}", phone_number, code);
 
             return Ok(send::Result {
-                request_id: Uuid::nil().into(),
+                request_id: Uuid::now_v7().into(),
             });
         }
 

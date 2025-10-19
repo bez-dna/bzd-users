@@ -2,7 +2,6 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rand::Rng as _;
 use sea_orm::DbConn;
-use uuid::Uuid;
 
 use crate::app::{
     auth::{Claims, repo, state::AuthState},
@@ -54,27 +53,26 @@ pub async fn join(
 
                 repo::create_verification(
                     db,
-                    repo::verification::Model {
-                        verification_id: Uuid::now_v7(),
-                        phone: cipher_phone_number,
-                        code: code.to_string(),
-                        request_id: verification_response.request_id,
-                        created_at: Utc::now().naive_utc(),
-                        updated_at: Utc::now().naive_utc(),
-                    },
+                    repo::verification::Model::new(
+                        cipher_phone_number,
+                        code,
+                        verification_response.request_id,
+                    ),
                 )
                 .await?
             }
         };
 
-    Ok(join::Response { verification })
+    let user = repo::find_user_by_phone(db, verification.phone.clone()).await?;
+
+    Ok(join::Response { verification, user })
 }
 
 pub mod join {
     use serde::Serialize;
     use validator::Validate;
 
-    use crate::app::auth::repo::verification;
+    use crate::app::auth::repo::{user, verification};
 
     #[derive(Validate)]
     pub struct Request {
@@ -85,6 +83,7 @@ pub mod join {
     #[derive(Serialize)]
     pub struct Response {
         pub verification: verification::Model,
+        pub user: Option<user::Model>,
     }
 }
 
@@ -104,18 +103,12 @@ pub async fn complete(
     let user = match repo::find_user_by_phone(db, verification.phone.clone()).await? {
         Some(user) => user,
         None => {
-            repo::create_user(
-                db,
-                repo::user::Model {
-                    user_id: Uuid::now_v7(),
-                    phone: verification.phone.clone(),
-                    name: None,
-                    locale: None,
-                    created_at: Utc::now().naive_utc(),
-                    updated_at: Utc::now().naive_utc(),
-                },
-            )
-            .await?
+            if let Some(name) = req.name {
+                repo::create_user(db, repo::user::Model::new(verification.phone.clone(), name))
+                    .await?
+            } else {
+                return Err(AppError::CompleteName);
+            }
         }
     };
 
@@ -137,10 +130,14 @@ pub async fn complete(
 
 pub mod complete {
     use uuid::Uuid;
+    use validator::Validate;
 
+    #[derive(Validate)]
     pub struct Request {
         pub verification_id: Uuid,
         pub code: String,
+        #[validate(length(min = 2))]
+        pub name: Option<String>,
     }
 
     pub struct Response {

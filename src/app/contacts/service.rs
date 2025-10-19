@@ -1,6 +1,4 @@
-use chrono::Utc;
 use sea_orm::DbConn;
-use uuid::Uuid;
 
 use crate::app::{contacts::repo, error::AppError, state::CryptoState};
 
@@ -12,15 +10,12 @@ pub async fn create_contacts(
     for it in req.contacts {
         repo::create_contact(
             db,
-            repo::contact::Model {
-                contact_id: Uuid::now_v7(),
-                user_id: req.user_id,
-                phone: crypto.encrypt(&it.phone.to_string())?,
-                name: it.name,
-                device_contact_id: it.device_contact_id,
-                created_at: Utc::now().naive_utc(),
-                updated_at: Utc::now().naive_utc(),
-            },
+            repo::contact::Model::new(
+                req.user_id,
+                crypto.encrypt(&it.phone.to_string())?,
+                it.name,
+                it.device_contact_id,
+            ),
         )
         .await?;
     }

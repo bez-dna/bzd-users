@@ -14,14 +14,14 @@ axum = "0.8.4"
 
 tokio = { version = "1.47.1", features = ["full"] }
 
-tonic = "0.14.1"
-tonic-health = "0.14.1"
-tonic-reflection = "0.14.1"
+tonic = "0.14.2"
+tonic-health = "0.14.2"
+tonic-reflection = "0.14.2"
 
-serde = "1.0.219"
-serde_json = "1.0.143"
+serde = "1.0.227"
+serde_json = "1.0.145"
 
-sea-orm = { version = "1.1.14", features = [
+sea-orm = { version = "1.1.16", features = [
   "sqlx-postgres",
   "runtime-tokio-rustls",
 ] }
@@ -31,12 +31,13 @@ reqwest = { version = "0.12.23", default-features = false, features = [
   "rustls-tls",
 ] }
 
-config = { version = "0.15.15", default-features = false, features = ["toml"] }
+config = { version = "0.15.17", default-features = false, features = ["toml"] }
 tracing = "0.1.41"
-uuid = { version = "1.18.0", features = ["v7"] }
+uuid = { version = "1.18.1", features = ["v7"] }
 validator = { version = "0.20.0", features = ["derive"] }
 thiserror = "2.0.16"
 rand = "0.9.2"
 jsonwebtoken = "9.3.1"
-chrono = "0.4.41"
+chrono = "0.4.42"
 aes-gcm = "0.10.3"
+random_color = "1.1.0"
