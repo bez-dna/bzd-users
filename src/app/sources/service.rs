@@ -7,6 +7,10 @@ pub async fn get_sources(
     db: &DbConn,
     req: get_sources::Request,
 ) -> Result<get_sources::Response, AppError> {
+    let sources = repo::find_sources_by_user_id(db, req.user_id).await?;
+
+    let source_user_ids: Vec<Uuid> = sources.iter().map(|it| it.source_user_id).collect();
+
     let reverse_contact_ids: Vec<Uuid> = repo::find_reverse_contacts_by_user_id(db, req.user_id)
         .await?
         .iter()
@@ -20,9 +24,8 @@ pub async fn get_sources(
             user.filter(|it| reverse_contact_ids.contains(&it.user_id))
                 .map(|user| get_sources::ContactWithUser { contact, user })
         })
+        .filter(|it| !source_user_ids.contains(&it.user.user_id))
         .collect();
-
-    let sources = repo::find_sources_by_user_id(db, req.user_id).await?;
 
     Ok(get_sources::Response {
         sources,
