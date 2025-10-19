@@ -83,6 +83,7 @@ mod get_sources {
         fn from(ContactWithUser { contact, user }: ContactWithUser) -> Self {
             Self {
                 contact_id: Some(contact.contact_id.into()),
+                name: contact.name.into(),
                 contact_user_id: Some(user.user_id.into()),
             }
         }

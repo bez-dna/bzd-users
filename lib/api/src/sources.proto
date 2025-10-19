@@ -31,5 +31,6 @@ message GetSourcesResponse {
     message Contact {
         optional string contact_id = 101;
         optional string contact_user_id = 102;
+        optional string name = 103;
     }
 }
