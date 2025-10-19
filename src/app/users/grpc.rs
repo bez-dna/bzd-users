@@ -38,10 +38,10 @@ impl UsersService for GrpcUsersService {
 }
 
 async fn get_user(
-    AppState { db, .. }: &AppState,
+    AppState { db, crypto, .. }: &AppState,
     req: GetUserRequest,
 ) -> Result<GetUserResponse, AppError> {
-    let res = service::get_user(db, req.try_into()?).await?;
+    let res = service::get_user(db, crypto, req.try_into()?).await?;
 
     Ok(res.into())
 }
@@ -71,6 +71,9 @@ mod get_user {
                 user: Some(User {
                     user_id: Some(user.user_id.into()),
                     name: user.name.into(),
+                    phone: user.phone.into(),
+                    abbr: user.abbr.into(),
+                    color: user.color.into(),
                 }),
             }
         }
@@ -92,9 +95,9 @@ mod get_users {
 
     use crate::app::{
         error::AppError,
-        users::service::{
-            self,
-            get_users::{Response, UserDecryptedPhone},
+        users::{
+            UserDecryptedPhone,
+            service::{self, get_users::Response},
         },
     };
 
@@ -126,6 +129,8 @@ mod get_users {
                 user_id: Some(user.user_id.into()),
                 phone: user.phone.into(),
                 name: user.name.into(),
+                abbr: user.abbr.into(),
+                color: user.color.into(),
             }
         }
     }
