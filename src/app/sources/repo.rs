@@ -97,3 +97,12 @@ pub async fn find_sources_by_user_id<T: ConnectionTrait>(
 
     Ok(sources)
 }
+
+pub async fn get_source_by_id<T: ConnectionTrait>(
+    db: &T,
+    source_id: Uuid,
+) -> Result<Option<source::Model>, AppError> {
+    let source = source::Entity::find_by_id(source_id).one(db).await?;
+
+    Ok(source)
+}

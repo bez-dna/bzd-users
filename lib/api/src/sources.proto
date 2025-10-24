@@ -3,6 +3,7 @@ package bzd.users.sources;
 
 service SourcesService {
     rpc GetSources(GetSourcesRequest) returns (GetSourcesResponse);
+    rpc GetSource(GetSourceRequest) returns (GetSourceResponse);
     rpc CreateSource(CreateSourceRequest) returns (CreateSourceResponse);
 }
 
@@ -32,5 +33,19 @@ message GetSourcesResponse {
         optional string contact_id = 101;
         optional string contact_user_id = 102;
         optional string name = 103;
+    }
+}
+
+message GetSourceRequest {
+    optional string source_id = 101;
+    optional string user_id = 102;
+}
+
+message GetSourceResponse {
+    optional Source source = 501;
+
+    message Source {
+        optional string source_id = 101;
+        optional string source_user_id = 102;
     }
 }
