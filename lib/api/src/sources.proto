@@ -37,7 +37,7 @@ message GetSourcesResponse {
 }
 
 message GetSourceRequest {
-    optional string source_id = 101;
+    optional string source_user_id = 101;
     optional string user_id = 102;
 }
 

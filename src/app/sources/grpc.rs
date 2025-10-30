@@ -127,7 +127,7 @@ mod get_source {
 
         fn try_from(req: GetSourceRequest) -> Result<Self, Self::Error> {
             Ok(Self {
-                source_id: req.source_id().parse()?,
+                source_user_id: req.source_user_id().parse()?,
                 user_id: req.user_id().parse()?,
             })
         }

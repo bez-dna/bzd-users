@@ -57,13 +57,10 @@ pub async fn get_source(
     db: &DbConn,
     req: get_source::Request,
 ) -> Result<get_source::Response, AppError> {
-    let source = repo::get_source_by_id(db, req.source_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
-
-    if source.user_id != req.user_id {
-        return Err(AppError::NotFound);
-    }
+    let source =
+        repo::get_source_by_source_user_id_and_user_id(db, req.source_user_id, req.user_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
 
     Ok(source.into())
 }
@@ -75,7 +72,7 @@ pub mod get_source {
 
     pub struct Request {
         pub user_id: Uuid,
-        pub source_id: Uuid,
+        pub source_user_id: Uuid,
     }
 
     pub struct Response {
@@ -93,6 +90,10 @@ pub async fn create_source(
     db: &DbConn,
     req: create_source::Request,
 ) -> Result<create_source::Response, AppError> {
+    if req.source_user_id == req.user_id {
+        return Err(AppError::Other);
+    }
+
     let source_user = repo::get_user_by_id(db, req.source_user_id).await?;
     let source = repo::create_source(
         db,
