@@ -80,6 +80,7 @@ pub async fn find_contacts_by_user_id<T: ConnectionTrait>(
                 .into(),
         )
         .filter(contact::Column::UserId.eq(user_id))
+        .filter(user::Column::UserId.ne(user_id))
         .all(db)
         .await?;
 

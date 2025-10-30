@@ -26,8 +26,6 @@ pub mod get_user {
 
     use crate::app::users::UserDecryptedPhone;
 
-    // use crate::app::users::repo::{self, user::UserDecryptedPhone};
-
     pub struct Request {
         pub user_id: Uuid,
     }
