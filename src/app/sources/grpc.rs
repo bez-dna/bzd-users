@@ -1,6 +1,6 @@
 use bzd_users_api::{
-    CreateSourceRequest, CreateSourceResponse, GetSourcesRequest, GetSourcesResponse,
-    sources_service_server::SourcesService,
+    CreateSourceRequest, CreateSourceResponse, GetSourceRequest, GetSourceResponse,
+    GetSourcesRequest, GetSourcesResponse, sources_service_server::SourcesService,
 };
 use tonic::{Request, Response, Status};
 
@@ -23,6 +23,15 @@ impl SourcesService for GrpcSourcesService {
         req: Request<GetSourcesRequest>,
     ) -> Result<Response<GetSourcesResponse>, Status> {
         let res = get_sources(&self.state, req.into_inner()).await?;
+
+        Ok(Response::new(res))
+    }
+
+    async fn get_source(
+        &self,
+        req: Request<GetSourceRequest>,
+    ) -> Result<Response<GetSourceResponse>, Status> {
+        let res = get_source(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -94,6 +103,43 @@ mod get_sources {
             Self {
                 source_id: Some(source.source_id.into()),
                 source_user_id: Some(source.source_user_id.into()),
+            }
+        }
+    }
+}
+
+async fn get_source(
+    AppState { db, .. }: &AppState,
+    req: GetSourceRequest,
+) -> Result<GetSourceResponse, AppError> {
+    let res = service::get_source(db, req.try_into()?).await?;
+
+    Ok(res.into())
+}
+
+mod get_source {
+    use bzd_users_api::{GetSourceRequest, GetSourceResponse, get_source_response::Source};
+
+    use crate::app::{error::AppError, sources::service::get_source};
+
+    impl TryFrom<GetSourceRequest> for get_source::Request {
+        type Error = AppError;
+
+        fn try_from(req: GetSourceRequest) -> Result<Self, Self::Error> {
+            Ok(Self {
+                source_user_id: req.source_user_id().parse()?,
+                user_id: req.user_id().parse()?,
+            })
+        }
+    }
+
+    impl From<get_source::Response> for GetSourceResponse {
+        fn from(res: get_source::Response) -> Self {
+            Self {
+                source: Some(Source {
+                    source_id: Some(res.source.source_id.into()),
+                    source_user_id: Some(res.source.source_user_id.into()),
+                }),
             }
         }
     }
