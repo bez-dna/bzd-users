@@ -10,7 +10,7 @@ members = ["lib/api", "lib/migration"]
 bzd-users-api = { path = "lib/api" }
 bzd-lib = { git = "https://github.com/bez-dna/bzd-lib.git" }
 
-axum = "0.8.6"
+axum = "0.8.7"
 
 tokio = { version = "1.48.0", features = ["full"] }
 
@@ -21,7 +21,7 @@ tonic-reflection = "0.14.2"
 serde = "1.0.228"
 serde_json = "1.0.145"
 
-sea-orm = { version = "1.1.17", features = [
+sea-orm = { version = "1.1.19", features = [
   "sqlx-postgres",
   "runtime-tokio-rustls",
 ] }
@@ -31,13 +31,13 @@ reqwest = { version = "0.12.24", default-features = false, features = [
   "rustls-tls",
 ] }
 
-config = { version = "0.15.18", default-features = false, features = ["toml"] }
+config = { version = "0.15.19", default-features = false, features = ["toml"] }
 tracing = "0.1.41"
 uuid = { version = "1.18.1", features = ["v7"] }
 validator = { version = "0.20.0", features = ["derive"] }
 thiserror = "2.0.17"
 rand = "0.9.2"
-jsonwebtoken = { version = "10.1.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
 chrono = "0.4.42"
 aes-gcm = "0.10.3"
 random_color = "1.1.0"
