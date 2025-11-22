@@ -4,6 +4,7 @@ package bzd.users.users;
 service UsersService {
     rpc GetUser(GetUserRequest) returns (GetUserResponse);
     rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+    rpc GetUserUsers(GetUserUsersRequest) returns (GetUserUsersResponse);
 }
 
 message GetUserRequest {
@@ -36,4 +37,12 @@ message GetUsersResponse {
         optional string abbr = 104;
         optional string color = 105;
     }
+}
+
+message GetUserUsersRequest {
+    optional string user_id = 101;
+}
+
+message GetUserUsersResponse {
+    repeated string user_ids = 101;
 }
