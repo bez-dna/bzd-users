@@ -40,7 +40,7 @@ pub async fn get_users(
     crypto: &CryptoState,
     req: get_users::Request,
 ) -> Result<get_users::Response, AppError> {
-    let users = repo::get_users_by_user_ids(db, req.user_ids)
+    let users = repo::get_users_by_ids(db, req.user_ids)
         .await?
         .into_iter()
         .map(|user| UserDecryptedPhone::new(user, crypto))
@@ -60,5 +60,28 @@ pub mod get_users {
 
     pub struct Response {
         pub users: Vec<UserDecryptedPhone>,
+    }
+}
+
+pub async fn get_user_users(
+    db: &DbConn,
+    req: get_user_users::Request,
+) -> Result<get_user_users::Response, AppError> {
+    let users = repo::get_users_by_user_id(db, req.user_id).await?;
+
+    Ok(get_user_users::Response { users })
+}
+
+pub mod get_user_users {
+    use uuid::Uuid;
+
+    use crate::app::users::repo::user;
+
+    pub struct Request {
+        pub user_id: Uuid,
+    }
+
+    pub struct Response {
+        pub users: Vec<user::Model>,
     }
 }
