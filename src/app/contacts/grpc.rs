@@ -1,41 +1,48 @@
-use bzd_users_api::{
-    CreateContactsRequest, CreateContactsResponse, contacts_service_server::ContactsService,
-};
-// use bzd_users_api::{GetUserRequest, GetUserResponse, users_service_server::UsersService};
-use tonic::{Request, Response, Status};
+use std::sync::Arc;
 
-use crate::app::{contacts::service, error::AppError, state::AppState};
+use bzd_users_api::{CreateContactsRequest, CreateContactsResponse, contacts_service_server};
+use tonic::{Request, Response, Status, async_trait};
+
+use crate::app::{contacts::state::ContactsState, state::AppState};
 
 pub struct GrpcContactsService {
-    pub state: AppState,
+    pub state: Arc<ContactsState>,
 }
 
 impl GrpcContactsService {
-    pub fn new(state: AppState) -> Self {
+    pub fn new(state: &AppState) -> Self {
+        let AppState { db, crypto, .. } = state;
+
+        let state = Arc::new(ContactsState::new(db, crypto));
+
         Self { state }
     }
 }
 
-#[tonic::async_trait]
-impl ContactsService for GrpcContactsService {
+#[async_trait]
+impl contacts_service_server::ContactsService for GrpcContactsService {
     async fn create_contacts(
         &self,
         req: Request<CreateContactsRequest>,
     ) -> Result<Response<CreateContactsResponse>, Status> {
-        let res = create_contacts(&self.state, req.into_inner()).await?;
+        let res = self
+            .state
+            .service
+            .create_contacts(req.into_inner().try_into()?)
+            .await?;
 
-        Ok(Response::new(res))
+        Ok(Response::new(res.into()))
     }
 }
 
-async fn create_contacts(
-    AppState { db, crypto, .. }: &AppState,
-    req: CreateContactsRequest,
-) -> Result<CreateContactsResponse, AppError> {
-    let res = service::create_contacts(db, crypto, req.try_into()?).await?;
+// async fn create_contacts(
+//     AppState { db, crypto, .. }: &AppState,
+//     req: CreateContactsRequest,
+// ) -> Result<CreateContactsResponse, AppError> {
+//     let res = service::create_contacts(db, crypto, req.try_into()?).await?;
 
-    Ok(res.into())
-}
+//     Ok(res.into())
+// }
 
 mod create_contacts {
     use bzd_users_api::{CreateContactsRequest, CreateContactsResponse, create_contacts_request};

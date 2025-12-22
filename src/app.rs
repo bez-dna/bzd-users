@@ -1,9 +1,11 @@
 use axum::Router;
 use bzd_lib::error::Error;
 use bzd_lib::settings::Settings as _;
+use bzd_users_api::contacts_service_server::ContactsServiceServer;
 use tonic::service::Routes;
 use tracing::info;
 
+use crate::app::contacts::grpc::GrpcContactsService;
 use crate::app::settings::AppSettings;
 use crate::app::state::AppState;
 
@@ -40,7 +42,7 @@ async fn http_and_grpc(state: &AppState) -> Result<(), Error> {
         .add_service(health_service)
         .add_service(auth::auth_service(state.clone()))
         .add_service(users::users_service(state.clone()))
-        .add_service(contacts::contacts_service(state.clone()))
+        .add_service(ContactsServiceServer::new(GrpcContactsService::new(state)))
         .into_axum_router();
 
     let listener = tokio::net::TcpListener::bind(&state.settings.http.endpoint).await?;
