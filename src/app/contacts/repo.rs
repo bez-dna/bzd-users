@@ -7,17 +7,24 @@ use crate::app::error::AppError;
 
 pub mod contact;
 
-pub struct ContactsRepoDb {
+pub struct ContactsRepoImpl {
     pub db: Arc<DbConn>,
 }
 
+impl ContactsRepoImpl {
+    pub fn new(db: Arc<DbConn>) -> Self {
+        Self { db }
+    }
+}
+
 #[async_trait]
+#[cfg_attr(test, mockall::automock)]
 pub trait ContactsRepo: Send + Sync {
     async fn create_contact(&self, model: contact::Model) -> Result<(), AppError>;
 }
 
 #[async_trait]
-impl ContactsRepo for ContactsRepoDb {
+impl ContactsRepo for ContactsRepoImpl {
     async fn create_contact(&self, model: contact::Model) -> Result<(), AppError> {
         contact::Entity::insert(model.into_active_model())
             .on_conflict(

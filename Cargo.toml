@@ -42,3 +42,6 @@ chrono = "0.4.42"
 aes-gcm = "0.10.3"
 random_color = "1.1.0"
 async-trait = "0.1.89"
+
+[dev-dependencies]
+mockall = "0.14.0"

@@ -11,6 +11,8 @@ use crate::app::state::AppState;
 
 mod auth;
 mod contacts;
+mod crypto;
+mod db;
 mod error;
 mod settings;
 mod state;
@@ -40,8 +42,8 @@ async fn http_and_grpc(state: &AppState) -> Result<(), Error> {
     let router = routes
         .add_service(reflection_service)
         .add_service(health_service)
-        .add_service(auth::auth_service(state.clone()))
-        .add_service(users::users_service(state.clone()))
+        // .add_service(auth::auth_service(state.clone()))
+        // .add_service(users::users_service(state.clone()))
         .add_service(ContactsServiceServer::new(GrpcContactsService::new(state)))
         .into_axum_router();
 

@@ -5,6 +5,7 @@ use bzd_lib::settings::HttpSettings;
 use serde::Deserialize;
 
 use crate::app::auth::settings::AuthSettings;
+use crate::app::crypto::settings::CryptoSettings;
 
 #[derive(Deserialize, Clone)]
 pub struct AppSettings {
@@ -12,12 +13,6 @@ pub struct AppSettings {
     pub auth: AuthSettings,
     pub db: DBSettings,
     pub crypto: CryptoSettings,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct CryptoSettings {
-    pub key: String,
-    pub nonce: String,
 }
 
 impl Settings<AppSettings> for AppSettings {}

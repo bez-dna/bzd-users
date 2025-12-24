@@ -4,17 +4,17 @@ use tonic::async_trait;
 
 use crate::app::{
     contacts::repo::{self, ContactsRepo},
+    crypto::service::CryptoService,
     error::AppError,
-    state::CryptoState,
 };
 
-pub struct ContactsServiceImpl<R: ContactsRepo> {
-    repo: Arc<R>,
-    crypto: Arc<CryptoState>,
+pub struct ContactsServiceImpl {
+    repo: Arc<dyn ContactsRepo>,
+    crypto: Arc<dyn CryptoService>,
 }
 
-impl<R: ContactsRepo> ContactsServiceImpl<R> {
-    pub fn new(repo: Arc<R>, crypto: Arc<CryptoState>) -> Self {
+impl ContactsServiceImpl {
+    pub fn new(repo: Arc<dyn ContactsRepo>, crypto: Arc<dyn CryptoService>) -> Self {
         Self { repo, crypto }
     }
 }
@@ -28,7 +28,7 @@ pub trait ContactsService: Send + Sync {
 }
 
 #[async_trait]
-impl<R: ContactsRepo> ContactsService for ContactsServiceImpl<R> {
+impl ContactsService for ContactsServiceImpl {
     async fn create_contacts(
         &self,
         req: create_contacts::Request,
@@ -68,4 +68,53 @@ pub mod create_contacts {
     }
 
     pub struct Response {}
+
+    #[cfg(test)]
+    mod tests {
+        use std::sync::Arc;
+
+        use bzd_lib::error::Error;
+        use uuid::Uuid;
+
+        use crate::app::contacts::repo::MockContactsRepo;
+        use crate::app::contacts::service::ContactsService;
+        use crate::app::contacts::service::ContactsServiceImpl;
+        use crate::app::contacts::service::create_contacts::{Contact, Request};
+        use crate::app::crypto::service::MockCryptoService;
+
+        #[tokio::test]
+        async fn successfully_create_contacts() -> Result<(), Error> {
+            let mut repo = MockContactsRepo::new();
+            repo.expect_create_contact()
+                .times(2)
+                .returning(|_| Box::pin(async move { Ok(()) }));
+
+            let mut crypto = MockCryptoService::new();
+            crypto.expect_encrypt().times(2).returning(|_| Ok(vec![]));
+
+            let req = Request {
+                user_id: Uuid::now_v7(),
+                contacts: vec![
+                    Contact {
+                        name: "NAME_1".into(),
+                        phone: 111,
+                        device_contact_id: "DC_ID_1".into(),
+                    },
+                    Contact {
+                        name: "NAME_2".into(),
+                        phone: 222,
+                        device_contact_id: "DC_ID_2".into(),
+                    },
+                ],
+            };
+
+            let service = ContactsServiceImpl::new(Arc::new(repo), Arc::new(crypto));
+
+            let res = service.create_contacts(req).await;
+
+            assert!(res.is_ok());
+
+            Ok(())
+        }
+    }
 }

@@ -1,13 +1,11 @@
 use std::sync::Arc;
 
-use sea_orm::DbConn;
-
 use crate::app::{
     contacts::{
-        repo::ContactsRepoDb,
+        repo::ContactsRepoImpl,
         service::{ContactsService, ContactsServiceImpl},
     },
-    state::CryptoState,
+    state::AppState,
 };
 
 pub struct ContactsState {
@@ -15,13 +13,12 @@ pub struct ContactsState {
 }
 
 impl ContactsState {
-    pub fn new(db: &DbConn, crypto: &CryptoState) -> Self {
-        let repo = Arc::new(ContactsRepoDb {
-            db: Arc::new(db.clone()),
-        });
-        let crypto = Arc::new(crypto.clone());
+    pub fn new(state: &AppState) -> Self {
+        let repo = ContactsRepoImpl::new(state.db.conn.clone());
+        let repo = Arc::new(repo);
 
-        let service = Arc::new(ContactsServiceImpl::new(repo, crypto));
+        let service = ContactsServiceImpl::new(repo, state.crypto.service.clone());
+        let service = Arc::new(service);
 
         Self { service }
     }

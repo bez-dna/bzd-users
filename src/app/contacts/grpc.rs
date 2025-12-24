@@ -11,9 +11,7 @@ pub struct GrpcContactsService {
 
 impl GrpcContactsService {
     pub fn new(state: &AppState) -> Self {
-        let AppState { db, crypto, .. } = state;
-
-        let state = Arc::new(ContactsState::new(db, crypto));
+        let state = Arc::new(ContactsState::new(state));
 
         Self { state }
     }
@@ -34,15 +32,6 @@ impl contacts_service_server::ContactsService for GrpcContactsService {
         Ok(Response::new(res.into()))
     }
 }
-
-// async fn create_contacts(
-//     AppState { db, crypto, .. }: &AppState,
-//     req: CreateContactsRequest,
-// ) -> Result<CreateContactsResponse, AppError> {
-//     let res = service::create_contacts(db, crypto, req.try_into()?).await?;
-
-//     Ok(res.into())
-// }
 
 mod create_contacts {
     use bzd_users_api::{CreateContactsRequest, CreateContactsResponse, create_contacts_request};
