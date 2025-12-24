@@ -39,3 +39,42 @@ impl ContactsRepo for ContactsRepoImpl {
         Ok(())
     }
 }
+
+mod create_contact {
+    #[cfg(test)]
+    mod tests {
+        use std::sync::Arc;
+
+        use bzd_lib::error::Error;
+        use sea_orm::{DatabaseBackend, MockDatabase, MockExecResult};
+        use uuid::Uuid;
+
+        use crate::app::contacts::repo::{ContactsRepo, ContactsRepoImpl, contact};
+
+        #[tokio::test]
+        async fn successfully_create_contact() -> Result<(), Error> {
+            // Синтетический тест чтобы провериить мок от sea_orm
+            let db = MockDatabase::new(DatabaseBackend::Postgres);
+            let db = db.append_exec_results([MockExecResult {
+                last_insert_id: 0,
+                rows_affected: 1,
+            }]);
+
+            let db = db.into_connection();
+            let repo = ContactsRepoImpl::new(Arc::new(db));
+
+            let res = repo
+                .create_contact(contact::Model::new(
+                    Uuid::now_v7(),
+                    vec![],
+                    "NAME".into(),
+                    "DC_ID".into(),
+                ))
+                .await;
+
+            assert!(res.is_ok());
+
+            Ok(())
+        }
+    }
+}
