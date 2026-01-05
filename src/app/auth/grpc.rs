@@ -1,4 +1,4 @@
-use bzd_users_api::{
+use bzd_users_api::auth::{
     CompleteRequest, CompleteResponse, JoinRequest, JoinResponse, auth_service_server::AuthService,
 };
 use tonic::{Request, Response, Status};
@@ -34,7 +34,7 @@ impl AuthService for GrpcAuthService {
 }
 
 mod join {
-    use bzd_users_api::{JoinRequest, JoinResponse, join_response::Verification};
+    use bzd_users_api::auth::{JoinRequest, JoinResponse, join_response::Verification};
     use validator::Validate as _;
 
     use crate::app::{
@@ -84,7 +84,7 @@ mod join {
 
     #[cfg(test)]
     mod tests {
-        use bzd_users_api::JoinRequest;
+        use bzd_users_api::auth::JoinRequest;
 
         use crate::app::auth::service;
 
@@ -129,7 +129,7 @@ mod join {
 }
 
 mod complete {
-    use bzd_users_api::{CompleteRequest, CompleteResponse};
+    use bzd_users_api::auth::{CompleteRequest, CompleteResponse};
     use uuid::Uuid;
     use validator::Validate;
 
@@ -173,7 +173,7 @@ mod complete {
 
     #[cfg(test)]
     mod tests {
-        use bzd_users_api::CompleteRequest;
+        use bzd_users_api::auth::CompleteRequest;
         use uuid::Uuid;
 
         use crate::app::{auth::service, error::AppError};
