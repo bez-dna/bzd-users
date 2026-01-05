@@ -1,4 +1,4 @@
-use bzd_users_api::auth_service_server::AuthServiceServer;
+use bzd_users_api::auth::auth_service_server::AuthServiceServer;
 use serde::Serialize;
 use uuid::Uuid;
 
