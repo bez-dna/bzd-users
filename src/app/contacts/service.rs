@@ -1,51 +1,30 @@
-use std::sync::Arc;
-
-use tonic::async_trait;
+use sea_orm::DbConn;
 
 use crate::app::{
-    contacts::repo::{self, ContactsRepo},
-    crypto::service::CryptoService,
+    contacts::repo::{self, ContactModel},
+    crypto::state::CryptoState,
     error::AppError,
 };
 
-pub struct ContactsServiceImpl {
-    repo: Arc<dyn ContactsRepo>,
-    crypto: Arc<dyn CryptoService>,
-}
-
-impl ContactsServiceImpl {
-    pub fn new(repo: Arc<dyn ContactsRepo>, crypto: Arc<dyn CryptoService>) -> Self {
-        Self { repo, crypto }
+pub async fn create_contacts(
+    db: &DbConn,
+    crypto: &CryptoState,
+    req: create_contacts::Request,
+) -> Result<create_contacts::Response, AppError> {
+    for it in req.contacts {
+        repo::create_contact(
+            db,
+            ContactModel::new(
+                req.user_id,
+                crypto.encryptor.encrypt(&it.phone.to_string())?,
+                it.name,
+                it.device_contact_id,
+            ),
+        )
+        .await?;
     }
-}
 
-#[async_trait]
-pub trait ContactsService: Send + Sync {
-    async fn create_contacts(
-        &self,
-        req: create_contacts::Request,
-    ) -> Result<create_contacts::Response, AppError>;
-}
-
-#[async_trait]
-impl ContactsService for ContactsServiceImpl {
-    async fn create_contacts(
-        &self,
-        req: create_contacts::Request,
-    ) -> Result<create_contacts::Response, AppError> {
-        for it in req.contacts {
-            self.repo
-                .create_contact(repo::contact::Model::new(
-                    req.user_id,
-                    self.crypto.encrypt(&it.phone.to_string())?,
-                    it.name,
-                    it.device_contact_id,
-                ))
-                .await?;
-        }
-
-        Ok(create_contacts::Response {})
-    }
+    Ok(create_contacts::Response {})
 }
 
 pub mod create_contacts {
@@ -74,23 +53,41 @@ pub mod create_contacts {
         use std::sync::Arc;
 
         use bzd_lib::error::Error;
+        use sea_orm::{DatabaseBackend, MockDatabase, MockExecResult};
         use uuid::Uuid;
 
-        use crate::app::contacts::repo::MockContactsRepo;
-        use crate::app::contacts::service::ContactsService;
-        use crate::app::contacts::service::ContactsServiceImpl;
-        use crate::app::contacts::service::create_contacts::{Contact, Request};
-        use crate::app::crypto::service::MockCryptoService;
+        use crate::app::{
+            contacts::service::{
+                self,
+                create_contacts::{Contact, Request},
+            },
+            crypto::{encryptor::MockEncryptor, state::CryptoState},
+        };
 
         #[tokio::test]
         async fn successfully_create_contacts() -> Result<(), Error> {
-            let mut repo = MockContactsRepo::new();
-            repo.expect_create_contact()
-                .times(2)
-                .returning(|_| Box::pin(async move { Ok(()) }));
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_exec_results([
+                    MockExecResult {
+                        last_insert_id: 0,
+                        rows_affected: 1,
+                    },
+                    MockExecResult {
+                        last_insert_id: 0,
+                        rows_affected: 1,
+                    },
+                ])
+                .into_connection();
 
-            let mut crypto = MockCryptoService::new();
-            crypto.expect_encrypt().times(2).returning(|_| Ok(vec![]));
+            let mut encryptor = MockEncryptor::new();
+            encryptor
+                .expect_encrypt()
+                .times(2)
+                .returning(|_| Ok(vec![1, 2, 3]));
+
+            let crypto = CryptoState {
+                encryptor: Arc::new(encryptor),
+            };
 
             let req = Request {
                 user_id: Uuid::now_v7(),
@@ -108,9 +105,7 @@ pub mod create_contacts {
                 ],
             };
 
-            let service = ContactsServiceImpl::new(Arc::new(repo), Arc::new(crypto));
-
-            let res = service.create_contacts(req).await;
+            let res = service::create_contacts(&db, &crypto, req).await;
 
             assert!(res.is_ok());
 

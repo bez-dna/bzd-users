@@ -1,76 +1,52 @@
-use std::sync::Arc;
-
-use sea_orm::{DbConn, EntityTrait, IntoActiveModel as _, sea_query::OnConflict};
-use tonic::async_trait;
+use sea_orm::{ConnectionTrait, EntityTrait, IntoActiveModel as _, sea_query::OnConflict};
 
 use crate::app::error::AppError;
 
-pub mod contact;
+mod contact;
 
-pub struct ContactsRepoImpl {
-    pub db: Arc<DbConn>,
-}
+pub type ContactModel = contact::Model;
 
-impl ContactsRepoImpl {
-    pub fn new(db: Arc<DbConn>) -> Self {
-        Self { db }
-    }
-}
+pub async fn create_contact<T: ConnectionTrait>(
+    db: &T,
+    model: ContactModel,
+) -> Result<(), AppError> {
+    contact::Entity::insert(model.into_active_model())
+        .on_conflict(
+            OnConflict::columns([contact::Column::UserId, contact::Column::Phone])
+                .do_nothing()
+                .to_owned(),
+        )
+        .do_nothing()
+        .exec(db)
+        .await?;
 
-#[async_trait]
-#[cfg_attr(test, mockall::automock)]
-pub trait ContactsRepo: Send + Sync {
-    async fn create_contact(&self, model: contact::Model) -> Result<(), AppError>;
-}
-
-#[async_trait]
-impl ContactsRepo for ContactsRepoImpl {
-    async fn create_contact(&self, model: contact::Model) -> Result<(), AppError> {
-        contact::Entity::insert(model.into_active_model())
-            .on_conflict(
-                OnConflict::columns([contact::Column::UserId, contact::Column::Phone])
-                    .do_nothing()
-                    .to_owned(),
-            )
-            .do_nothing()
-            .exec(self.db.as_ref())
-            .await?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 mod create_contact {
     #[cfg(test)]
     mod tests {
-        use std::sync::Arc;
-
         use bzd_lib::error::Error;
         use sea_orm::{DatabaseBackend, MockDatabase, MockExecResult};
         use uuid::Uuid;
 
-        use crate::app::contacts::repo::{ContactsRepo, ContactsRepoImpl, contact};
+        use crate::app::contacts::repo::{self, ContactModel};
 
         #[tokio::test]
         async fn successfully_create_contact() -> Result<(), Error> {
             // Синтетический тест чтобы провериить мок от sea_orm
-            let db = MockDatabase::new(DatabaseBackend::Postgres);
-            let db = db.append_exec_results([MockExecResult {
-                last_insert_id: 0,
-                rows_affected: 1,
-            }]);
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_exec_results([MockExecResult {
+                    last_insert_id: 0,
+                    rows_affected: 1,
+                }])
+                .into_connection();
 
-            let db = db.into_connection();
-            let repo = ContactsRepoImpl::new(Arc::new(db));
-
-            let res = repo
-                .create_contact(contact::Model::new(
-                    Uuid::now_v7(),
-                    vec![],
-                    "NAME".into(),
-                    "DC_ID".into(),
-                ))
-                .await;
+            let res = repo::create_contact(
+                &db,
+                ContactModel::new(Uuid::now_v7(), vec![], "NAME".into(), "DC_ID".into()),
+            )
+            .await;
 
             assert!(res.is_ok());
 

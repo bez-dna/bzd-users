@@ -3,14 +3,14 @@ use bzd_users_api::{
 };
 use tonic::{Request, Response, Status};
 
-use crate::app::{auth::service, error::AppError, state::AppState};
+use crate::app::auth::state::AuthState;
 
 pub struct GrpcAuthService {
-    pub state: AppState,
+    pub state: AuthState,
 }
 
 impl GrpcAuthService {
-    pub fn new(state: AppState) -> Self {
+    pub fn new(state: AuthState) -> Self {
         Self { state }
     }
 }
@@ -18,7 +18,7 @@ impl GrpcAuthService {
 #[tonic::async_trait]
 impl AuthService for GrpcAuthService {
     async fn join(&self, req: Request<JoinRequest>) -> Result<Response<JoinResponse>, Status> {
-        let res = join(&self.state, req.into_inner()).await?;
+        let res = join::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -27,28 +27,34 @@ impl AuthService for GrpcAuthService {
         &self,
         req: Request<CompleteRequest>,
     ) -> Result<Response<CompleteResponse>, Status> {
-        let res = complete(&self.state, req.into_inner()).await?;
+        let res = complete::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
-}
-
-async fn join(
-    AppState {
-        db, auth, crypto, ..
-    }: &AppState,
-    req: JoinRequest,
-) -> Result<JoinResponse, AppError> {
-    let res = service::join(db, auth, crypto, req.try_into()?).await?;
-
-    Ok(res.into())
 }
 
 mod join {
     use bzd_users_api::{JoinRequest, JoinResponse, join_response::Verification};
     use validator::Validate as _;
 
-    use crate::app::{auth::service, error::AppError};
+    use crate::app::{
+        auth::{service, state::AuthState},
+        error::AppError,
+    };
+
+    pub async fn handler(
+        AuthState {
+            db,
+            crypto,
+            verification_client,
+            ..
+        }: &AuthState,
+        req: JoinRequest,
+    ) -> Result<JoinResponse, AppError> {
+        let res = service::join(&db.conn, verification_client, crypto, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<JoinRequest> for service::join::Request {
         type Error = AppError;
@@ -122,21 +128,26 @@ mod join {
     }
 }
 
-async fn complete(
-    AppState { db, auth, .. }: &AppState,
-    req: CompleteRequest,
-) -> Result<CompleteResponse, AppError> {
-    let res = service::complete(db, auth, req.try_into()?).await?;
-
-    Ok(res.into())
-}
-
 mod complete {
     use bzd_users_api::{CompleteRequest, CompleteResponse};
     use uuid::Uuid;
     use validator::Validate;
 
-    use crate::app::{auth::service, error::AppError};
+    use crate::app::{
+        auth::{service, state::AuthState},
+        error::AppError,
+    };
+
+    pub async fn handler(
+        AuthState {
+            db, private_key, ..
+        }: &AuthState,
+        req: CompleteRequest,
+    ) -> Result<CompleteResponse, AppError> {
+        let res = service::complete(&db.conn, private_key, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<CompleteRequest> for service::complete::Request {
         type Error = AppError;

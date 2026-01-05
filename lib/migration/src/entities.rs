@@ -27,11 +27,3 @@ pub enum Contacts {
     Name,
     DeviceContactId,
 }
-
-#[derive(DeriveIden)]
-pub enum Sources {
-    Table,
-    SourceId,
-    UserId,
-    SourceUserId,
-}

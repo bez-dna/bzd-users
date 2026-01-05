@@ -1,22 +1,20 @@
 use std::sync::Arc;
 
-use bzd_lib::error::Error;
-
 use crate::app::crypto::{
-    service::{CryptoService, CryptoServiceImpl},
+    encryptor::{Encryptor, EncryptorImpl},
     settings::CryptoSettings,
 };
 
 #[derive(Clone)]
 pub struct CryptoState {
-    pub service: Arc<dyn CryptoService>,
+    pub encryptor: Arc<dyn Encryptor>,
 }
 
 impl CryptoState {
-    pub fn new(settings: &CryptoSettings) -> Result<Self, Error> {
-        let service = CryptoServiceImpl::new(settings);
-        let service = Arc::new(service);
+    pub fn new(settings: &CryptoSettings) -> Self {
+        let encryptor = EncryptorImpl::new(settings);
+        let encryptor = Arc::new(encryptor);
 
-        Ok(Self { service })
+        Self { encryptor }
     }
 }
