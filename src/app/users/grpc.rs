@@ -1,17 +1,17 @@
-use bzd_users_api::{
+use bzd_users_api::users::{
     GetUserRequest, GetUserResponse, GetUserUsersRequest, GetUserUsersResponse, GetUsersRequest,
     GetUsersResponse, users_service_server::UsersService,
 };
 use tonic::{Request, Response, Status};
 
-use crate::app::{error::AppError, state::AppState, users::service};
+use crate::app::users::state::UsersState;
 
 pub struct GrpcUsersService {
-    pub state: AppState,
+    pub state: UsersState,
 }
 
 impl GrpcUsersService {
-    pub fn new(state: AppState) -> Self {
+    pub fn new(state: UsersState) -> Self {
         Self { state }
     }
 }
@@ -22,7 +22,7 @@ impl UsersService for GrpcUsersService {
         &self,
         req: Request<GetUserRequest>,
     ) -> Result<Response<GetUserResponse>, Status> {
-        let res = get_user(&self.state, req.into_inner()).await?;
+        let res = get_user::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -31,7 +31,7 @@ impl UsersService for GrpcUsersService {
         &self,
         req: Request<GetUsersRequest>,
     ) -> Result<Response<GetUsersResponse>, Status> {
-        let res = get_users(&self.state, req.into_inner()).await?;
+        let res = get_users::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -40,29 +40,32 @@ impl UsersService for GrpcUsersService {
         &self,
         req: Request<GetUserUsersRequest>,
     ) -> Result<Response<GetUserUsersResponse>, Status> {
-        let res = get_user_users(&self.state, req.into_inner()).await?;
+        let res = get_user_users::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
 }
 
-async fn get_user(
-    AppState { db, crypto, .. }: &AppState,
-    req: GetUserRequest,
-) -> Result<GetUserResponse, AppError> {
-    let res = service::get_user(db, crypto, req.try_into()?).await?;
-
-    Ok(res.into())
-}
-
 mod get_user {
-    use bzd_users_api::{GetUserRequest, GetUserResponse, get_user_response::User};
+    use bzd_users_api::users::{GetUserRequest, GetUserResponse, get_user_response::User};
     use uuid::Uuid;
 
     use crate::app::{
         error::AppError,
-        users::service::{self, get_user::Response},
+        users::{
+            service::{self, get_user::Response},
+            state::UsersState,
+        },
     };
+
+    pub async fn handler(
+        UsersState { db, crypto, .. }: &UsersState,
+        req: GetUserRequest,
+    ) -> Result<GetUserResponse, AppError> {
+        let res = service::get_user(&db.conn, crypto, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<GetUserRequest> for service::get_user::Request {
         type Error = AppError;
@@ -89,26 +92,29 @@ mod get_user {
     }
 }
 
-async fn get_users(
-    AppState { db, crypto, .. }: &AppState,
-    req: GetUsersRequest,
-) -> Result<GetUsersResponse, AppError> {
-    let res = service::get_users(db, crypto, req.try_into()?).await?;
-
-    Ok(res.into())
-}
-
 mod get_users {
-    use bzd_users_api::{GetUsersRequest, GetUsersResponse, get_users_response};
+    use bzd_users_api::users::{GetUsersRequest, GetUsersResponse, get_users_response};
     use uuid::Uuid;
 
     use crate::app::{
         error::AppError,
         users::{
-            UserDecryptedPhone,
-            service::{self, get_users::Response},
+            service::{
+                self,
+                get_users::{Response, User},
+            },
+            state::UsersState,
         },
     };
+
+    pub async fn handler(
+        UsersState { db, crypto, .. }: &UsersState,
+        req: GetUsersRequest,
+    ) -> Result<GetUsersResponse, AppError> {
+        let res = service::get_users(&db.conn, crypto, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<GetUsersRequest> for service::get_users::Request {
         type Error = AppError;
@@ -132,8 +138,8 @@ mod get_users {
         }
     }
 
-    impl From<UserDecryptedPhone> for get_users_response::User {
-        fn from(user: UserDecryptedPhone) -> Self {
+    impl From<User> for get_users_response::User {
+        fn from(user: User) -> Self {
             Self {
                 user_id: Some(user.user_id.into()),
                 phone: user.phone.into(),
@@ -145,22 +151,28 @@ mod get_users {
     }
 }
 
-async fn get_user_users(
-    AppState { db, .. }: &AppState,
-    req: GetUserUsersRequest,
-) -> Result<GetUserUsersResponse, AppError> {
-    let res = service::get_user_users(db, req.try_into()?).await?;
-
-    Ok(res.into())
-}
-
 mod get_user_users {
-    use bzd_users_api::{GetUserUsersRequest, GetUserUsersResponse};
+    use bzd_users_api::users::{GetUserUsersRequest, GetUserUsersResponse};
 
     use crate::app::{
         error::AppError,
-        users::service::get_user_users::{Request, Response},
+        users::{
+            service::{
+                self,
+                get_user_users::{Request, Response},
+            },
+            state::UsersState,
+        },
     };
+
+    pub async fn handler(
+        UsersState { db, .. }: &UsersState,
+        req: GetUserUsersRequest,
+    ) -> Result<GetUserUsersResponse, AppError> {
+        let res = service::get_user_users(&db.conn, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<GetUserUsersRequest> for Request {
         type Error = AppError;

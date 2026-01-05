@@ -1,51 +1,58 @@
-use bzd_users_api::{
+use bzd_users_api::contacts::{
     CreateContactsRequest, CreateContactsResponse, contacts_service_server::ContactsService,
 };
-// use bzd_users_api::{GetUserRequest, GetUserResponse, users_service_server::UsersService};
-use tonic::{Request, Response, Status};
+use tonic::{Request, Response, Status, async_trait};
 
-use crate::app::{contacts::service, error::AppError, state::AppState};
+use crate::app::contacts::state::ContactsState;
 
 pub struct GrpcContactsService {
-    pub state: AppState,
+    pub state: ContactsState,
 }
 
 impl GrpcContactsService {
-    pub fn new(state: AppState) -> Self {
+    pub fn new(state: ContactsState) -> Self {
         Self { state }
     }
 }
 
-#[tonic::async_trait]
+#[async_trait]
 impl ContactsService for GrpcContactsService {
     async fn create_contacts(
         &self,
         req: Request<CreateContactsRequest>,
     ) -> Result<Response<CreateContactsResponse>, Status> {
-        let res = create_contacts(&self.state, req.into_inner()).await?;
+        let res = create_contacts::handler(&self.state, req.into_inner()).await?;
 
-        Ok(Response::new(res))
+        Ok(Response::new(res.into()))
     }
 }
 
-async fn create_contacts(
-    AppState { db, crypto, .. }: &AppState,
-    req: CreateContactsRequest,
-) -> Result<CreateContactsResponse, AppError> {
-    let res = service::create_contacts(db, crypto, req.try_into()?).await?;
-
-    Ok(res.into())
-}
-
 mod create_contacts {
-    use bzd_users_api::{CreateContactsRequest, CreateContactsResponse, create_contacts_request};
+    use bzd_users_api::contacts::{
+        CreateContactsRequest, CreateContactsResponse, create_contacts_request,
+    };
     use uuid::Uuid;
     use validator::Validate as _;
 
     use crate::app::{
-        contacts::service::create_contacts::{Contact, Request, Response},
+        contacts::{
+            service::{
+                self,
+                create_contacts::{Contact, Request, Response},
+            },
+            state::ContactsState,
+        },
         error::AppError,
     };
+
+    pub async fn handler(
+        ContactsState { db, crypto, .. }: &ContactsState,
+        req: CreateContactsRequest,
+    ) -> Result<CreateContactsResponse, AppError> {
+        let res = service::create_contacts(&db.conn, crypto, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
 
     impl TryFrom<CreateContactsRequest> for Request {
         type Error = AppError;
@@ -104,7 +111,7 @@ mod create_contacts {
 
     #[cfg(test)]
     mod tests {
-        use bzd_users_api::{CreateContactsRequest, create_contacts_request::Contact};
+        use bzd_users_api::contacts::{CreateContactsRequest, create_contacts_request::Contact};
         use uuid::Uuid;
 
         use crate::app::{

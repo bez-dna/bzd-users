@@ -4,17 +4,14 @@ use rand::Rng as _;
 use sea_orm::DbConn;
 
 use crate::app::{
-    auth::{Claims, repo, state::AuthState},
+    auth::{Claims, PrivateKey, repo, verification::VerificationClient},
+    crypto::state::CryptoState,
     error::AppError,
-    state::CryptoState,
 };
 
 pub async fn join(
     db: &DbConn,
-    AuthState {
-        verification_client,
-        ..
-    }: &AuthState,
+    verification_client: &VerificationClient,
     crypto: &CryptoState,
     req: join::Request,
 ) -> Result<join::Response, AppError> {
@@ -24,7 +21,7 @@ pub async fn join(
     нормальный юзер будет долбить ручку с N-устройств в одну секунду времени.
     */
 
-    let cipher_phone_number = crypto.encrypt(&req.phone_number.to_string())?;
+    let cipher_phone_number = crypto.encryptor.encrypt(&req.phone_number.to_string())?;
 
     let verification =
         match repo::find_verification_by_phone(db, cipher_phone_number.clone()).await? {
@@ -89,7 +86,7 @@ pub mod join {
 
 pub async fn complete(
     db: &DbConn,
-    state: &AuthState,
+    private_key: &PrivateKey,
     req: complete::Request,
 ) -> Result<complete::Response, AppError> {
     let verification = repo::find_verification(db, req.verification_id)
@@ -120,7 +117,7 @@ pub async fn complete(
     let jwt = encode(
         &Header::new(Algorithm::RS256),
         &claims,
-        &EncodingKey::from_rsa_pem(&state.private_key)?,
+        &EncodingKey::from_rsa_pem(private_key)?,
     )?;
 
     repo::delete_verification(db, verification).await?;

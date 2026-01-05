@@ -2,12 +2,14 @@ pub const AUTH_FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!(
 
 tonic::include_proto!("bzd.users.auth");
 
-pub const CONTACTS_FILE_DESCRIPTOR_SET: &[u8] =
-    tonic::include_file_descriptor_set!("contacts_descriptor");
+pub mod contacts {
+    pub const DESCRIPTOR: &[u8] = tonic::include_file_descriptor_set!("contacts_descriptor");
 
-tonic::include_proto!("bzd.users.contacts");
+    tonic::include_proto!("bzd.users.contacts");
+}
 
-pub const USERS_FILE_DESCRIPTOR_SET: &[u8] =
-    tonic::include_file_descriptor_set!("users_descriptor");
+pub mod users {
+    pub const DESCRIPTOR: &[u8] = tonic::include_file_descriptor_set!("users_descriptor");
 
-tonic::include_proto!("bzd.users.users");
+    tonic::include_proto!("bzd.users.users");
+}
