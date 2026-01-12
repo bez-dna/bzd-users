@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use crate::app::error::AppError;
 
-pub mod user;
-pub mod verification;
+mod user;
+mod verification;
 
 pub type VerificationModel = verification::Model;
 pub type UserModel = user::Model;

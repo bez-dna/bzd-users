@@ -4,7 +4,7 @@ use sea_orm::DbConn;
 use crate::app::{
     auth::{
         encoder::{Claims, Encoder},
-        repo,
+        repo::{self, UserModel, VerificationModel},
         verification::VerificationClient,
     },
     crypto::state::CryptoState,
@@ -25,42 +25,39 @@ pub async fn join(
 
     let cipher_phone_number = crypto.encryptor.encrypt(&req.phone_number.to_string())?;
 
-    let verification =
-        match repo::find_verification_by_phone(db, cipher_phone_number.clone()).await? {
-            /*
-            request_id не передается в send, а это значит что на каждый вызов будет улетать новый запрос в тг,
-            это может привести к тому, что можно всадить весь бюджет отправки кодов или задолбать жертву.
+    let verification = match repo::find_verification_by_phone(db, cipher_phone_number.clone())
+        .await?
+    {
+        /*
+        request_id не передается в send, а это значит что на каждый вызов будет улетать новый запрос в тг,
+        это может привести к тому, что можно всадить весь бюджет отправки кодов или задолбать жертву.
 
-            план такой: нужно будет при наличии verification проверять его created_at и если ограничить отправку кодов,
-            например, раз в минуту или любой другой механизм.
+        план такой: нужно будет при наличии verification проверять его created_at и если ограничить отправку кодов,
+        например, раз в минуту или любой другой механизм.
 
-            ну и на стороне тг есть защита от флуда, так что прям супер быстро не провернуть эту атаку
-            */
-            Some(verification) => {
-                verification_client
-                    .send(None, req.phone_number, verification.code.clone())
-                    .await?;
+        ну и на стороне тг есть защита от флуда, так что прям супер быстро не провернуть эту атаку
+        */
+        Some(verification) => {
+            verification_client
+                .send(None, req.phone_number, verification.code.clone())
+                .await?;
 
-                verification
-            }
-            None => {
-                let code: i32 = rand::rng().random_range(1000..9999);
+            verification
+        }
+        None => {
+            let code: i32 = rand::rng().random_range(1000..9999);
 
-                let verification_response = verification_client
-                    .send(None, req.phone_number, code.to_string())
-                    .await?;
+            let verification_response = verification_client
+                .send(None, req.phone_number, code.to_string())
+                .await?;
 
-                repo::create_verification(
-                    db,
-                    repo::verification::Model::new(
-                        cipher_phone_number,
-                        code,
-                        verification_response.request_id,
-                    ),
-                )
-                .await?
-            }
-        };
+            repo::create_verification(
+                db,
+                VerificationModel::new(cipher_phone_number, code, verification_response.request_id),
+            )
+            .await?
+        }
+    };
 
     let user = repo::find_user_by_phone(db, verification.phone.clone()).await?;
 
@@ -71,7 +68,7 @@ pub mod join {
     use serde::Serialize;
     use validator::Validate;
 
-    use crate::app::auth::repo::{user, verification};
+    use crate::app::auth::repo::{UserModel, VerificationModel};
 
     #[derive(Validate)]
     pub struct Request {
@@ -81,8 +78,8 @@ pub mod join {
 
     #[derive(Serialize)]
     pub struct Response {
-        pub verification: verification::Model,
-        pub user: Option<user::Model>,
+        pub verification: VerificationModel,
+        pub user: Option<UserModel>,
     }
 }
 
@@ -108,8 +105,7 @@ pub async fn complete(
         Some(user) => user,
         None => {
             if let Some(name) = req.name {
-                repo::create_user(db, repo::user::Model::new(verification.phone.clone(), name))
-                    .await?
+                repo::create_user(db, UserModel::new(verification.phone.clone(), name)).await?
             } else {
                 return Err(AppError::CompleteName);
             }
