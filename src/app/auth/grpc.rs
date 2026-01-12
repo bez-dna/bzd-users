@@ -140,11 +140,20 @@ mod complete {
 
     pub async fn handler(
         AuthState {
-            db, private_key, ..
+            db,
+            encoder,
+            settings,
+            ..
         }: &AuthState,
         req: CompleteRequest,
     ) -> Result<CompleteResponse, AppError> {
-        let res = service::complete(&db.conn, private_key, req.try_into()?).await?;
+        let res = service::complete(
+            &db.conn,
+            encoder.as_ref(),
+            req.try_into()?,
+            settings.verification.debug,
+        )
+        .await?;
 
         Ok(res.into())
     }

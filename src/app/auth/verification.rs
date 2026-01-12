@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use serde::Deserialize;
-use tracing::debug;
 use uuid::Uuid;
 
 use crate::app::error::AppError;
@@ -28,8 +27,6 @@ impl VerificationClient {
         if let Some(debug) = self.settings.debug
             && debug
         {
-            debug!("{} - {}", phone_number, code);
-
             return Ok(send::Result {
                 request_id: Uuid::now_v7().into(),
             });
