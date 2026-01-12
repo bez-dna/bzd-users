@@ -9,10 +9,13 @@ use crate::app::error::AppError;
 pub mod user;
 pub mod verification;
 
+pub type VerificationModel = verification::Model;
+pub type UserModel = user::Model;
+
 pub async fn create_verification<T: ConnectionTrait>(
     db: &T,
-    model: verification::Model,
-) -> Result<verification::Model, AppError> {
+    model: VerificationModel,
+) -> Result<VerificationModel, AppError> {
     let message = model.into_active_model().insert(db).await?;
 
     Ok(message)
@@ -21,7 +24,7 @@ pub async fn create_verification<T: ConnectionTrait>(
 pub async fn find_verification_by_phone<T: ConnectionTrait>(
     db: &T,
     phone: Vec<u8>,
-) -> Result<Option<verification::Model>, AppError> {
+) -> Result<Option<VerificationModel>, AppError> {
     let verification = verification::Entity::find()
         .filter(verification::Column::Phone.eq(phone))
         .one(db)
@@ -33,7 +36,7 @@ pub async fn find_verification_by_phone<T: ConnectionTrait>(
 pub async fn find_verification<T: ConnectionTrait>(
     db: &T,
     verification_id: Uuid,
-) -> Result<Option<verification::Model>, AppError> {
+) -> Result<Option<VerificationModel>, AppError> {
     Ok(verification::Entity::find_by_id(verification_id)
         .one(db)
         .await?)
@@ -41,7 +44,7 @@ pub async fn find_verification<T: ConnectionTrait>(
 
 pub async fn delete_verification<T: ConnectionTrait>(
     db: &T,
-    model: verification::Model,
+    model: VerificationModel,
 ) -> Result<(), AppError> {
     model.delete(db).await?;
 
@@ -50,8 +53,8 @@ pub async fn delete_verification<T: ConnectionTrait>(
 
 pub async fn create_user<T: ConnectionTrait>(
     db: &T,
-    model: user::Model,
-) -> Result<user::Model, AppError> {
+    model: UserModel,
+) -> Result<UserModel, AppError> {
     let user = model.into_active_model().insert(db).await?;
 
     Ok(user)
@@ -60,7 +63,7 @@ pub async fn create_user<T: ConnectionTrait>(
 pub async fn find_user_by_phone<T: ConnectionTrait>(
     db: &T,
     phone: Vec<u8>,
-) -> Result<Option<user::Model>, AppError> {
+) -> Result<Option<UserModel>, AppError> {
     let user = user::Entity::find()
         .filter(user::Column::Phone.eq(phone))
         .one(db)

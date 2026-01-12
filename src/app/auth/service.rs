@@ -1,10 +1,12 @@
-use chrono::{Duration, Utc};
-use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use rand::Rng as _;
 use sea_orm::DbConn;
 
 use crate::app::{
-    auth::{Claims, PrivateKey, repo, verification::VerificationClient},
+    auth::{
+        encoder::{Claims, Encoder},
+        repo,
+        verification::VerificationClient,
+    },
     crypto::state::CryptoState,
     error::AppError,
 };
@@ -86,15 +88,20 @@ pub mod join {
 
 pub async fn complete(
     db: &DbConn,
-    private_key: &PrivateKey,
+    encoder: &dyn Encoder,
     req: complete::Request,
+    debug: Option<bool>,
 ) -> Result<complete::Response, AppError> {
     let verification = repo::find_verification(db, req.verification_id)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    if verification.code != req.code {
-        return Err(AppError::VerificationCode);
+    if let Some(debug) = debug
+        && !debug
+    {
+        if verification.code != req.code {
+            return Err(AppError::VerificationCode);
+        }
     }
 
     let user = match repo::find_user_by_phone(db, verification.phone.clone()).await? {
@@ -109,16 +116,8 @@ pub async fn complete(
         }
     };
 
-    let claims = Claims {
-        sub: user.user_id,
-        exp: (Utc::now() + Duration::days(300)).timestamp().try_into()?,
-    };
-
-    let jwt = encode(
-        &Header::new(Algorithm::RS256),
-        &claims,
-        &EncodingKey::from_rsa_pem(private_key)?,
-    )?;
+    let claims = Claims::new(user.user_id)?;
+    let jwt = encoder.encode(&claims)?;
 
     repo::delete_verification(db, verification).await?;
 
@@ -139,5 +138,86 @@ pub mod complete {
 
     pub struct Response {
         pub jwt: String,
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use bzd_lib::error::Error;
+        use sea_orm::{DatabaseBackend, MockDatabase, MockExecResult};
+        use uuid::Uuid;
+
+        use crate::app::{
+            auth::{
+                encoder::MockEncoder,
+                service::{self, complete::Request},
+            },
+            error::AppError,
+        };
+
+        #[tokio::test]
+        async fn test_complete_without_debug() -> Result<(), Error> {
+            let encoder = MockEncoder::new();
+
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_query_results([[stub::verification(1110)]])
+                .into_connection();
+
+            let req = Request {
+                verification_id: Uuid::now_v7(),
+                code: String::from("1111"),
+                name: Some(String::new()),
+            };
+
+            let res = service::complete(&db, &encoder, req, Some(false)).await;
+
+            assert!(res.is_err());
+            assert!(matches!(res, Err(AppError::VerificationCode)));
+
+            Ok(())
+        }
+
+        #[tokio::test]
+        async fn test_complete_with_debug() -> Result<(), Error> {
+            let db = MockDatabase::new(DatabaseBackend::Postgres)
+                .append_query_results([[stub::verification(1110)]])
+                .append_query_results([[stub::user()]])
+                .append_exec_results([MockExecResult {
+                    last_insert_id: 0,
+                    rows_affected: 1,
+                }])
+                .into_connection();
+
+            let req = Request {
+                verification_id: Uuid::now_v7(),
+                code: String::from("1111"),
+                name: None,
+            };
+
+            let mut encoder = MockEncoder::new();
+            encoder
+                .expect_encode()
+                .times(1)
+                .returning(|_| Ok("JWT".into()));
+
+            let res = service::complete(&db, &encoder, req, Some(true)).await;
+
+            assert!(res.is_ok());
+
+            assert_eq!("JWT", res?.jwt);
+
+            Ok(())
+        }
+
+        mod stub {
+            use crate::app::auth::repo::{UserModel, VerificationModel};
+
+            pub fn user() -> UserModel {
+                UserModel::new(vec![], String::new())
+            }
+
+            pub fn verification(code: i32) -> VerificationModel {
+                VerificationModel::new(vec![], code, String::new())
+            }
+        }
     }
 }
