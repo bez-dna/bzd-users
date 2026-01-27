@@ -17,7 +17,7 @@ message GetUserResponse {
     message User {
         optional string user_id = 101;
         optional string name = 102;
-        optional string phone = 103;
+        // optional string phone = 103;
         optional string abbr = 104;
         optional string color = 105;
     }
@@ -33,7 +33,7 @@ message GetUsersResponse {
     message User {
         optional string user_id = 101;
         optional string name = 102;
-        optional string phone = 103;
+        // optional string phone = 103;
         optional string abbr = 104;
         optional string color = 105;
     }

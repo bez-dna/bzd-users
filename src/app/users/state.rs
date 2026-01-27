@@ -1,7 +1,6 @@
-use crate::app::{crypto::state::CryptoState, db::DbState};
+use crate::app::db::DbState;
 
 #[derive(Clone)]
 pub struct UsersState {
     pub db: DbState,
-    pub crypto: CryptoState,
 }

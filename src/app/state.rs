@@ -18,10 +18,7 @@ impl AppState {
         let crypto = CryptoState::new(&settings.crypto);
 
         let auth = AuthState::new(&settings.auth, db.clone(), crypto.clone()).await?;
-        let users = UsersState {
-            db: db.clone(),
-            crypto: crypto.clone(),
-        };
+        let users = UsersState { db: db.clone() };
         let contacts = ContactsState {
             db: db.clone(),
             crypto: crypto.clone(),

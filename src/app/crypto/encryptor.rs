@@ -25,7 +25,7 @@ impl EncryptorImpl {
 pub trait Encryptor: Send + Sync {
     fn encrypt(&self, text: &String) -> Result<Vec<u8>, AppError>;
 
-    fn decrypt(&self, text: &Vec<u8>) -> Result<String, AppError>;
+    // fn decrypt(&self, text: &Vec<u8>) -> Result<String, AppError>;
 }
 
 impl Encryptor for EncryptorImpl {
@@ -33,11 +33,11 @@ impl Encryptor for EncryptorImpl {
         Ok(self.cipher.encrypt(&self.nonce, text.as_bytes())?)
     }
 
-    fn decrypt(&self, text: &Vec<u8>) -> Result<String, AppError> {
-        Ok(String::from_utf8(
-            self.cipher.decrypt(&self.nonce, text.as_ref())?,
-        )?)
-    }
+    // fn decrypt(&self, text: &Vec<u8>) -> Result<String, AppError> {
+    //     Ok(String::from_utf8(
+    //         self.cipher.decrypt(&self.nonce, text.as_ref())?,
+    //     )?)
+    // }
 }
 
 #[cfg(test)]
@@ -60,7 +60,7 @@ mod tests {
         let text = String::from("TEXT_2_ENCRYPT");
         let cipher_text = encryptor.encrypt(&text)?;
 
-        assert_eq!(text, encryptor.decrypt(&cipher_text)?);
+        // assert_eq!(text, encryptor.decrypt(&cipher_text)?);
 
         Ok(())
     }
