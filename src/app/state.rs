@@ -15,7 +15,7 @@ pub struct AppState {
 impl AppState {
     pub async fn new(settings: AppSettings) -> Result<Self, Error> {
         let db = DbState::new(&settings.db).await?;
-        let crypto = CryptoState::new(&settings.crypto);
+        let crypto = CryptoState::new(&settings.crypto)?;
 
         let auth = AuthState::new(&settings.auth, db.clone(), crypto.clone()).await?;
         let users = UsersState { db: db.clone() };
