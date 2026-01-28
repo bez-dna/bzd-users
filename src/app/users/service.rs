@@ -49,6 +49,8 @@ pub async fn get_user_users(
     db: &DbConn,
     req: get_user_users::Request,
 ) -> Result<get_user_users::Response, AppError> {
+    // TODO: нужно добавить обратную проверку на нахождение в контактах, иначе это можно использовать как дырку
+    // для получения номеров чужих акков
     let users = repo::get_users_by_user_id(db, req.user_id).await?;
 
     Ok(get_user_users::Response { users })
