@@ -42,10 +42,12 @@ impl Model {
     }
 
     pub fn color(&self) -> String {
-        random_color::RandomColor::new()
+        let [r, g, b, a] = random_color::RandomColor::new()
             .alpha(0.3)
             .seed(self.user_id.to_string())
-            .to_rgba_string()
+            .to_rgba_array();
+
+        format!("#{:02x}{:02x}{:02x}{:02x}", r, g, b, a)
     }
 }
 
@@ -79,5 +81,18 @@ mod tests {
 
         user.name = "Д".into();
         assert_eq!("Д", user.abbr());
+    }
+
+    #[test]
+    fn test_color_gen() {
+        let user = Model {
+            user_id: Uuid::nil(),
+            phone: vec![],
+            name: "".into(),
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+        };
+
+        assert_eq!("#39d3d64c", user.color())
     }
 }

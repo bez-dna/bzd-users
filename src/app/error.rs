@@ -55,12 +55,6 @@ pub enum AppError {
     Other,
 }
 
-impl From<aes_gcm::Error> for AppError {
-    fn from(_: aes_gcm::Error) -> Self {
-        Self::Aes
-    }
-}
-
 impl From<std::io::Error> for AppError {
     fn from(_: std::io::Error) -> Self {
         Self::Other

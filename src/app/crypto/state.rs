@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use bzd_lib::error::Error;
+
 use crate::app::crypto::{
     encryptor::{Encryptor, EncryptorImpl},
     settings::CryptoSettings,
@@ -11,10 +13,10 @@ pub struct CryptoState {
 }
 
 impl CryptoState {
-    pub fn new(settings: &CryptoSettings) -> Self {
-        let encryptor = EncryptorImpl::new(settings);
+    pub fn new(settings: &CryptoSettings) -> Result<Self, Error> {
+        let encryptor = EncryptorImpl::new(settings)?;
         let encryptor = Arc::new(encryptor);
 
-        Self { encryptor }
+        Ok(Self { encryptor })
     }
 }

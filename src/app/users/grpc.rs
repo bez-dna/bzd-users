@@ -59,10 +59,10 @@ mod get_user {
     };
 
     pub async fn handler(
-        UsersState { db, crypto, .. }: &UsersState,
+        UsersState { db, .. }: &UsersState,
         req: GetUserRequest,
     ) -> Result<GetUserResponse, AppError> {
-        let res = service::get_user(&db.conn, crypto, req.try_into()?).await?;
+        let res = service::get_user(&db.conn, req.try_into()?).await?;
 
         Ok(res.into())
     }
@@ -82,10 +82,9 @@ mod get_user {
             Self {
                 user: Some(User {
                     user_id: Some(user.user_id.into()),
-                    name: user.name.into(),
-                    phone: user.phone.into(),
-                    abbr: user.abbr.into(),
-                    color: user.color.into(),
+                    name: user.name.clone().into(),
+                    abbr: user.abbr().into(),
+                    color: user.color().into(),
                 }),
             }
         }
@@ -99,19 +98,17 @@ mod get_users {
     use crate::app::{
         error::AppError,
         users::{
-            service::{
-                self,
-                get_users::{Response, User},
-            },
+            repo::UserModel,
+            service::{self, get_users::Response},
             state::UsersState,
         },
     };
 
     pub async fn handler(
-        UsersState { db, crypto, .. }: &UsersState,
+        UsersState { db, .. }: &UsersState,
         req: GetUsersRequest,
     ) -> Result<GetUsersResponse, AppError> {
-        let res = service::get_users(&db.conn, crypto, req.try_into()?).await?;
+        let res = service::get_users(&db.conn, req.try_into()?).await?;
 
         Ok(res.into())
     }
@@ -138,14 +135,13 @@ mod get_users {
         }
     }
 
-    impl From<User> for get_users_response::User {
-        fn from(user: User) -> Self {
+    impl From<UserModel> for get_users_response::User {
+        fn from(user: UserModel) -> Self {
             Self {
                 user_id: Some(user.user_id.into()),
-                phone: user.phone.into(),
-                name: user.name.into(),
-                abbr: user.abbr.into(),
-                color: user.color.into(),
+                name: user.name.clone().into(),
+                abbr: user.abbr().into(),
+                color: user.color().into(),
             }
         }
     }
