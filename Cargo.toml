@@ -14,12 +14,12 @@ axum = "0.8.8"
 
 tokio = { version = "1.49.0", features = ["full"] }
 
-tonic = "0.14.2"
-tonic-health = "0.14.2"
-tonic-reflection = "0.14.2"
+tonic = "0.14.5"
+tonic-health = "0.14.5"
+tonic-reflection = "0.14.5"
 
 serde = "1.0.228"
-serde_json = "1.0.148"
+serde_json = "1.0.149"
 
 sea-orm = { version = "1.1.19", features = [
   "sqlx-postgres",
@@ -27,16 +27,18 @@ sea-orm = { version = "1.1.19", features = [
   "mock",
 ] }
 
-reqwest = { version = "0.13.1", default-features = false, features = ["json"] }
+reqwest = { version = "0.13.2", default-features = false, features = ["json"] }
+
+async-nats = "0.46.0"
 
 config = { version = "0.15.19", default-features = false, features = ["toml"] }
 tracing = "0.1.44"
-uuid = { version = "1.19.0", features = ["v7"] }
+uuid = { version = "1.21.0", features = ["v7"] }
 validator = { version = "0.20.0", features = ["derive"] }
-thiserror = "2.0.17"
-rand = "0.9.2"
-jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
-chrono = "0.4.42"
+thiserror = "2.0.18"
+rand = "0.10.0"
+jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
+chrono = "0.4.44"
 random_color = "1.1.0"
 async-trait = "0.1.89"
 hmac = "0.12.1"
