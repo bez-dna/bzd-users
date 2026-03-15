@@ -4,6 +4,7 @@ package bzd.users.users;
 service UsersService {
     rpc GetUser(GetUserRequest) returns (GetUserResponse);
     rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
     rpc GetUserUsers(GetUserUsersRequest) returns (GetUserUsersResponse);
 }
 
@@ -38,6 +39,14 @@ message GetUsersResponse {
         optional string color = 105;
     }
 }
+
+message UpdateUserRequest {
+    optional string current_user_id = 100;
+    // optional string user_id = 101;
+    optional string name = 102;
+}
+
+message UpdateUserResponse {}
 
 message GetUserUsersRequest {
     optional string user_id = 101;

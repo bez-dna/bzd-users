@@ -1,6 +1,6 @@
 use bzd_users_api::users::{
     GetUserRequest, GetUserResponse, GetUserUsersRequest, GetUserUsersResponse, GetUsersRequest,
-    GetUsersResponse, users_service_server::UsersService,
+    GetUsersResponse, UpdateUserRequest, UpdateUserResponse, users_service_server::UsersService,
 };
 use tonic::{Request, Response, Status};
 
@@ -41,6 +41,15 @@ impl UsersService for GrpcUsersService {
         req: Request<GetUserUsersRequest>,
     ) -> Result<Response<GetUserUsersResponse>, Status> {
         let res = get_user_users::handler(&self.state, req.into_inner()).await?;
+
+        Ok(Response::new(res))
+    }
+
+    async fn update_user(
+        &self,
+        req: Request<UpdateUserRequest>,
+    ) -> Result<Response<UpdateUserResponse>, Status> {
+        let res = update_user::handler(&self.state, req.into_inner()).await?;
 
         Ok(Response::new(res))
     }
@@ -143,6 +152,50 @@ mod get_users {
                 abbr: user.abbr().into(),
                 color: user.color().into(),
             }
+        }
+    }
+}
+
+mod update_user {
+    use bzd_users_api::users::{UpdateUserRequest, UpdateUserResponse};
+    use uuid::Uuid;
+    use validator::Validate as _;
+
+    use crate::app::{
+        error::AppError,
+        users::{
+            service::{self, update_user::Response},
+            state::UsersState,
+        },
+    };
+
+    pub async fn handler(
+        UsersState { db, .. }: &UsersState,
+        req: UpdateUserRequest,
+    ) -> Result<UpdateUserResponse, AppError> {
+        let res = service::update_user(&db.conn, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
+
+    impl TryFrom<UpdateUserRequest> for service::update_user::Request {
+        type Error = AppError;
+
+        fn try_from(req: UpdateUserRequest) -> Result<Self, Self::Error> {
+            let data = Self {
+                user_id: Uuid::parse_str(req.current_user_id())?,
+                name: req.name().into(),
+            };
+
+            data.validate()?;
+
+            Ok(data)
+        }
+    }
+
+    impl From<Response> for UpdateUserResponse {
+        fn from(_: Response) -> Self {
+            Self::default()
         }
     }
 }

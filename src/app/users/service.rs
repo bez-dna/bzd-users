@@ -1,6 +1,9 @@
-use sea_orm::DbConn;
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, DbConn};
 
-use crate::app::{error::AppError, users::repo};
+use crate::app::{
+    error::AppError,
+    users::repo::{self, UserActiveModel},
+};
 
 pub async fn get_user(db: &DbConn, req: get_user::Request) -> Result<get_user::Response, AppError> {
     let user = repo::get_user_by_id(db, req.user_id).await?;
@@ -43,6 +46,32 @@ pub mod get_users {
     pub struct Response {
         pub users: Vec<UserModel>,
     }
+}
+
+pub async fn update_user(
+    db: &DbConn,
+    req: update_user::Request,
+) -> Result<update_user::Response, AppError> {
+    let mut user: UserActiveModel = repo::get_user_by_id(db, req.user_id).await?.into();
+
+    user.name = Set(req.name);
+    user.update(db).await?;
+
+    Ok(update_user::Response {})
+}
+
+pub mod update_user {
+    use uuid::Uuid;
+    use validator::Validate;
+
+    #[derive(Validate)]
+    pub struct Request {
+        pub user_id: Uuid,
+        #[validate(length(min = 2))]
+        pub name: String,
+    }
+
+    pub struct Response {}
 }
 
 pub async fn get_user_users(
