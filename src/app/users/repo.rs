@@ -8,6 +8,7 @@ mod contact;
 mod user;
 
 pub type UserModel = user::Model;
+pub type UserActiveModel = user::ActiveModel;
 
 // pub struct UsersRepoImpl {
 //     // pub db: Arc<DbConn>,
