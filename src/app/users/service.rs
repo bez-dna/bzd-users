@@ -54,6 +54,7 @@ pub async fn update_user(
 ) -> Result<update_user::Response, AppError> {
     let mut user: UserActiveModel = repo::get_user_by_id(db, req.user_id).await?.into();
 
+    // тут получилось что мимо репы идет апдейт, нужно утащить update тоже в методы реп
     user.name = Set(req.name);
     user.update(db).await?;
 
