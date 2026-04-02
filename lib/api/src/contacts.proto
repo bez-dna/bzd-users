@@ -11,7 +11,7 @@ message CreateContactsRequest {
     repeated Contact contacts = 501;
 
     message Contact {
-        optional string phone_number = 101;
+        optional string phone = 101;
         optional string name = 102;
         optional string device_contact_id = 103;
     }

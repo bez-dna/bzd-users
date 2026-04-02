@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                     .col(uuid(Verifications::VerificationId).primary_key())
                     .col(binary(Verifications::Phone))
                     .col(text(Verifications::Code))
-                    .col(text(Verifications::RequestId))
+                    .col(text_null(Verifications::RequestId))
                     .to_owned(),
             )
             .await?;

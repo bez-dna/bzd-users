@@ -1,5 +1,6 @@
 use bzd_users_api::auth::{
-    CompleteRequest, CompleteResponse, JoinRequest, JoinResponse, auth_service_server::AuthService,
+    CompleteRequest, CompleteResponse, CreateVerificationRequest, CreateVerificationResponse,
+    JoinRequest, JoinResponse, auth_service_server::AuthService,
 };
 use tonic::{Request, Response, Status};
 
@@ -31,6 +32,15 @@ impl AuthService for GrpcAuthService {
 
         Ok(Response::new(res))
     }
+
+    async fn create_verification(
+        &self,
+        req: Request<CreateVerificationRequest>,
+    ) -> Result<Response<CreateVerificationResponse>, Status> {
+        let res = create_verification::handler(&self.state, req.into_inner()).await?;
+
+        Ok(Response::new(res))
+    }
 }
 
 mod join {
@@ -43,15 +53,10 @@ mod join {
     };
 
     pub async fn handler(
-        AuthState {
-            db,
-            crypto,
-            verification_client,
-            ..
-        }: &AuthState,
+        AuthState { db, crypto, .. }: &AuthState,
         req: JoinRequest,
     ) -> Result<JoinResponse, AppError> {
-        let res = service::join(&db.conn, verification_client, crypto, req.try_into()?).await?;
+        let res = service::join(&db.conn, crypto, req.try_into()?).await?;
 
         Ok(res.into())
     }
@@ -60,9 +65,7 @@ mod join {
         type Error = AppError;
 
         fn try_from(req: JoinRequest) -> Result<Self, Self::Error> {
-            let data = Self {
-                phone_number: req.phone_number(),
-            };
+            let data = Self { phone: req.phone() };
 
             data.validate()?;
 
@@ -76,8 +79,6 @@ mod join {
                 verification: Some(Verification {
                     verification_id: Some(res.verification.verification_id.into()),
                 }),
-
-                is_new: Some(res.user.is_none()),
             }
         }
     }
@@ -91,36 +92,34 @@ mod join {
         #[test]
         fn convert_grpc_request_2_service() {
             assert!(
+                TryInto::<service::join::Request>::try_into(JoinRequest { phone: Some(111) })
+                    .is_err()
+            );
+
+            assert!(
                 TryInto::<service::join::Request>::try_into(JoinRequest {
-                    phone_number: Some(111),
+                    phone: Some(-7_900_000_0000),
                 })
                 .is_err()
             );
 
             assert!(
                 TryInto::<service::join::Request>::try_into(JoinRequest {
-                    phone_number: Some(-7_900_000_0000),
+                    phone: Some(8_100_000_0000),
                 })
                 .is_err()
             );
 
             assert!(
                 TryInto::<service::join::Request>::try_into(JoinRequest {
-                    phone_number: Some(8_100_000_0000),
+                    phone: Some(6_900_000_0000),
                 })
                 .is_err()
             );
 
             assert!(
                 TryInto::<service::join::Request>::try_into(JoinRequest {
-                    phone_number: Some(6_900_000_0000),
-                })
-                .is_err()
-            );
-
-            assert!(
-                TryInto::<service::join::Request>::try_into(JoinRequest {
-                    phone_number: Some(7_900_000_0000),
+                    phone: Some(7_900_000_0000),
                 })
                 .is_ok()
             );
@@ -139,21 +138,11 @@ mod complete {
     };
 
     pub async fn handler(
-        AuthState {
-            db,
-            encoder,
-            settings,
-            ..
-        }: &AuthState,
+        AuthState { db, encoder, .. }: &AuthState,
         req: CompleteRequest,
     ) -> Result<CompleteResponse, AppError> {
-        let res = service::complete(
-            &db.conn,
-            encoder.as_ref(),
-            req.try_into()?,
-            settings.verification.debug,
-        )
-        .await?;
+        // TODO:
+        let res = service::complete(&db.conn, encoder.as_ref(), req.try_into()?).await?;
 
         Ok(res.into())
     }
@@ -207,6 +196,52 @@ mod complete {
             assert!(!req.is_ok());
 
             Ok(())
+        }
+    }
+}
+
+mod create_verification {
+    use bzd_users_api::auth::{CreateVerificationRequest, CreateVerificationResponse};
+    use validator::Validate as _;
+
+    use crate::app::{
+        auth::{
+            service::{
+                self,
+                create_verification::{Request, Response},
+            },
+            state::AuthState,
+        },
+        error::AppError,
+    };
+
+    pub async fn handler(
+        AuthState { db, crypto, .. }: &AuthState,
+        req: CreateVerificationRequest,
+    ) -> Result<CreateVerificationResponse, AppError> {
+        // TODO:
+        let res = service::create_verification(&db.conn, crypto, req.try_into()?).await?;
+
+        Ok(res.into())
+    }
+
+    impl TryFrom<CreateVerificationRequest> for Request {
+        type Error = AppError;
+
+        fn try_from(req: CreateVerificationRequest) -> Result<Self, Self::Error> {
+            let data = Self { phone: req.phone() };
+
+            data.validate()?;
+
+            Ok(data)
+        }
+    }
+
+    impl From<Response> for CreateVerificationResponse {
+        fn from(res: Response) -> Self {
+            Self {
+                code: res.verification.code.into(),
+            }
         }
     }
 }

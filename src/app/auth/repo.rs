@@ -16,19 +16,20 @@ pub async fn create_verification<T: ConnectionTrait>(
     db: &T,
     model: VerificationModel,
 ) -> Result<VerificationModel, AppError> {
-    let message = model.into_active_model().insert(db).await?;
+    let verification = model.into_active_model().insert(db).await?;
 
-    Ok(message)
+    Ok(verification)
 }
 
-pub async fn find_verification_by_phone<T: ConnectionTrait>(
+pub async fn get_verification_by_phone<T: ConnectionTrait>(
     db: &T,
     phone: Vec<u8>,
-) -> Result<Option<VerificationModel>, AppError> {
+) -> Result<VerificationModel, AppError> {
     let verification = verification::Entity::find()
         .filter(verification::Column::Phone.eq(phone))
         .one(db)
-        .await?;
+        .await?
+        .ok_or(AppError::NotFound)?;
 
     Ok(verification)
 }

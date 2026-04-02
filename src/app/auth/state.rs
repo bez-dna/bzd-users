@@ -6,7 +6,6 @@ use crate::app::{
     auth::{
         encoder::{Encoder, EncoderImpl},
         settings::AuthSettings,
-        verification::VerificationClient,
     },
     crypto::state::CryptoState,
     db::DbState,
@@ -15,10 +14,9 @@ use crate::app::{
 
 #[derive(Clone)]
 pub struct AuthState {
-    pub verification_client: Arc<VerificationClient>,
     pub db: DbState,
     pub crypto: CryptoState,
-    pub settings: AuthSettings,
+    // pub settings: AuthSettings,
     pub encoder: Arc<dyn Encoder>,
 }
 
@@ -28,8 +26,6 @@ impl AuthState {
         db: DbState,
         crypto: CryptoState,
     ) -> Result<Self, AppError> {
-        let verification_client = Arc::new(VerificationClient::new(settings.verification.clone()));
-
         let settings = settings.clone();
 
         let private_key = fs::read_to_string(&settings.private_key_file)
@@ -39,8 +35,7 @@ impl AuthState {
         let encoder = Arc::new(encoder);
 
         Ok(Self {
-            settings,
-            verification_client,
+            // settings,
             db,
             crypto,
             encoder,

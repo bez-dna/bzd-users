@@ -83,17 +83,17 @@ mod create_contacts {
         type Error = AppError;
 
         fn try_from(contact: create_contacts_request::Contact) -> Result<Self, Self::Error> {
-            let phone_number = contact.phone_number().trim();
+            let phone = contact.phone().trim();
 
-            let phone_number = if phone_number.starts_with("8") {
-                phone_number.replacen("8", "7", 1)
+            let phone = if phone.starts_with("8") {
+                phone.replacen("8", "7", 1)
             } else {
-                phone_number.into()
+                phone.into()
             };
 
             Ok(Self {
                 name: contact.name().into(),
-                phone: phone_number
+                phone: phone
                     .chars()
                     .filter(|it| it.is_ascii_digit())
                     .collect::<String>()
@@ -125,22 +125,22 @@ mod create_contacts {
                 user_id: Some(Uuid::now_v7().into()),
                 contacts: [
                     Contact {
-                        phone_number: Some("(555) 564-8583".into()),
+                        phone: Some("(555) 564-8583".into()),
                         name: Some("Kate Bell".into()),
                         device_contact_id: Some("177C371E-701D-42F8-A03B-C61CA31627F6".into()),
                     },
                     Contact {
-                        phone_number: Some("8 (909) 111-2222".into()),
+                        phone: Some("8 (909) 111-2222".into()),
                         name: Some("Kate Bell".into()),
                         device_contact_id: Some("177C371E-701D-42F8-A03B-C61CA31627F6".into()),
                     },
                     Contact {
-                        phone_number: Some("888-555-5512".into()),
+                        phone: Some("888-555-5512".into()),
                         name: None,
                         device_contact_id: Some("410FE041-5C4E-48DA-B4DE-04C15EA3DBAC".into()),
                     },
                     Contact {
-                        phone_number: Some("+7 (999) 111-22-33".into()),
+                        phone: Some("+7 (999) 111-22-33".into()),
                         name: Some("".into()),
                         device_contact_id: Some("E94CD15C-7964-4A9B-8AC4-10D7CFB791FD".into()),
                     },
@@ -155,9 +155,9 @@ mod create_contacts {
         }
 
         #[test]
-        fn convert_phone_number() -> Result<(), AppError> {
+        fn convert_phone() -> Result<(), AppError> {
             let contact: create_contacts::Contact = Contact {
-                phone_number: Some("7 (999) 777 11-22".into()),
+                phone: Some("7 (999) 777 11-22".into()),
                 name: None,
                 device_contact_id: None,
             }
@@ -166,7 +166,7 @@ mod create_contacts {
             assert_eq!(79997771122, contact.phone);
 
             let contact: create_contacts::Contact = Contact {
-                phone_number: Some("8 (999) 777 11-22".into()),
+                phone: Some("8 (999) 777 11-22".into()),
                 name: None,
                 device_contact_id: None,
             }
@@ -175,7 +175,7 @@ mod create_contacts {
             assert_eq!(79997771122, contact.phone);
 
             let contact: create_contacts::Contact = Contact {
-                phone_number: Some(" 8 (999) 777 11-22 ".into()),
+                phone: Some(" 8 (999) 777 11-22 ".into()),
                 name: None,
                 device_contact_id: None,
             }
