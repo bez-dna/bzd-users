@@ -1,6 +1,6 @@
 use sea_orm::{
     ActiveModelTrait, ColumnTrait as _, ConnectionTrait, EntityTrait as _, IntoActiveModel as _,
-    ModelTrait as _, QueryFilter as _,
+    QueryFilter as _,
 };
 use uuid::Uuid;
 
@@ -43,14 +43,14 @@ pub async fn find_verification<T: ConnectionTrait>(
         .await?)
 }
 
-pub async fn delete_verification<T: ConnectionTrait>(
-    db: &T,
-    model: VerificationModel,
-) -> Result<(), AppError> {
-    model.delete(db).await?;
+// pub async fn delete_verification<T: ConnectionTrait>(
+//     db: &T,
+//     model: VerificationModel,
+// ) -> Result<(), AppError> {
+//     model.delete(db).await?;
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 pub async fn create_user<T: ConnectionTrait>(
     db: &T,

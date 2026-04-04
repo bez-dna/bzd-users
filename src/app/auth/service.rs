@@ -66,7 +66,8 @@ pub async fn complete(
     let claims = Claims::new(user.user_id)?;
     let jwt = encoder.encode(&claims)?;
 
-    repo::delete_verification(db, verification).await?;
+    // TODO: нужно будет вернуть удаление когда будет нормальный флоу
+    // repo::delete_verification(db, verification).await?;
 
     Ok(complete::Response { jwt })
 }
