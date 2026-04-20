@@ -45,6 +45,8 @@ pub enum AppError {
     Aes,
     #[error("NOT_FOUND")]
     NotFound,
+    #[error("FORBIDDEN")]
+    Forbidden,
     #[error("VERIFICATION_SEND")]
     VerificationSend,
     #[error("VERIFICATION_CODE")]
