@@ -1,5 +1,5 @@
 use bzd_lib::error::Error;
-use hmac::Mac;
+use hmac::{KeyInit as _, Mac};
 
 use crate::app::{
     crypto::{HmacSha256, settings::CryptoSettings},
