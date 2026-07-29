@@ -25,24 +25,24 @@ serde_json = "1.0.151"
 serde_with = { version = "3.21.0", features = ["base64"] }
 
 # db
-sea-orm = { version = "1.1.20", features = [
+sea-orm = { version = "2.0.0", features = [
   "sqlx-postgres",
   "runtime-tokio-rustls",
   "mock",
 ] }
 
 # async
-async-nats = "0.49.1"
+async-nats = "0.50.0"
 
 # auth
 coset = "0.4.2"
 sha2 = "0.11.0"
 p256 = "0.14.0"
 ecdsa = { version = "0.17.0", features = ["der"] }
-jsonwebtoken = { version = "10.4.0", features = ["rust_crypto"] }
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 regex = "1.13.1"
 rand = "0.10.2"
-base64 = "0.22.1"
+base64 = "0.23.0"
 serde_cbor_2 = "0.13.0"
 url = "2.5.8"
 
@@ -50,7 +50,7 @@ url = "2.5.8"
 config = { version = "0.15.25", default-features = false, features = ["toml"] }
 tracing = "0.1.44"
 uuid = { version = "1.24.0", features = ["v7"] }
-validator = { version = "0.20.0", features = ["derive"] }
+validator = { version = "0.21.0", features = ["derive"] }
 thiserror = "2.0.19"
 chrono = "0.4.45"
 random_color = "1.1.0"
