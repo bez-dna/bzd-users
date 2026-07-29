@@ -3,29 +3,29 @@ use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
-#[sea_orm(table_name = "contacts")]
+#[sea_orm(table_name = "user_challenges")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub contact_id: Uuid,
+    pub user_challenge_id: Uuid,
+    pub challenge: Vec<u8>,
     pub user_id: Uuid,
-    pub phone: Vec<u8>,
+    pub login: String,
     pub name: String,
-    pub device_contact_id: String,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
 
 impl Model {
-    pub fn new(user_id: Uuid, phone: Vec<u8>, name: String, device_contact_id: String) -> Self {
+    pub fn new(challenge: Vec<u8>, user_id: Uuid, login: String, name: String) -> Self {
+        let user_challenge_id = Uuid::now_v7();
         let now = Utc::now().naive_utc();
-        let contact_id = Uuid::now_v7();
 
         Self {
-            contact_id,
+            user_challenge_id,
+            challenge,
             user_id,
-            phone,
+            login,
             name,
-            device_contact_id,
             created_at: now,
             updated_at: now,
         }

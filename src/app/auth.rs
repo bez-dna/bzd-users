@@ -5,6 +5,7 @@ use grpc::GrpcAuthService;
 
 mod encoder;
 mod grpc;
+mod passkey;
 mod repo;
 mod service;
 pub mod settings;

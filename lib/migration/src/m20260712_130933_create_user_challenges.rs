@@ -1,6 +1,6 @@
 use sea_orm_migration::{prelude::*, schema::*};
 
-use crate::entities::Contacts;
+use crate::entities::UserChallenges;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -10,12 +10,12 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .create_table(
-                table_auto(Contacts::Table)
-                    .col(uuid(Contacts::ContactId).primary_key())
-                    .col(uuid(Contacts::UserId))
-                    .col(binary(Contacts::Phone))
-                    .col(text(Contacts::Name))
-                    .col(text(Contacts::DeviceContactId))
+                table_auto(UserChallenges::Table)
+                    .col(uuid(UserChallenges::UserChallengeId).primary_key())
+                    .col(binary(UserChallenges::Challenge))
+                    .col(uuid(UserChallenges::UserId))
+                    .col(text(UserChallenges::Login))
+                    .col(text(UserChallenges::Name))
                     .to_owned(),
             )
             .await?;
@@ -23,11 +23,10 @@ impl MigrationTrait for Migration {
         manager
             .create_index(
                 Index::create()
-                    .name("contacts_user_id_phone_udx")
+                    .name("user_challenges_challenge_udx")
                     .unique()
-                    .table(Contacts::Table)
-                    .col(Contacts::UserId)
-                    .col(Contacts::Phone)
+                    .table(UserChallenges::Table)
+                    .col(UserChallenges::Challenge)
                     .to_owned(),
             )
             .await
@@ -35,7 +34,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Contacts::Table).to_owned())
+            .drop_table(Table::drop().table(UserChallenges::Table).to_owned())
             .await
     }
 }

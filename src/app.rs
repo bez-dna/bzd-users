@@ -8,8 +8,6 @@ use crate::app::settings::AppSettings;
 use crate::app::state::AppState;
 
 mod auth;
-mod contacts;
-mod crypto;
 mod db;
 mod error;
 mod settings;
@@ -30,7 +28,6 @@ async fn http_and_grpc(state: &AppState, settings: &HttpSettings) -> Result<(), 
         .register_encoded_file_descriptor_set(tonic_health::pb::FILE_DESCRIPTOR_SET)
         .register_encoded_file_descriptor_set(bzd_users_api::auth::FILE_DESCRIPTOR_SET)
         .register_encoded_file_descriptor_set(bzd_users_api::users::FILE_DESCRIPTOR_SET)
-        .register_encoded_file_descriptor_set(bzd_users_api::contacts::FILE_DESCRIPTOR_SET)
         .build_v1alpha()?;
 
     let (_, health_service) = tonic_health::server::health_reporter();
@@ -42,7 +39,6 @@ async fn http_and_grpc(state: &AppState, settings: &HttpSettings) -> Result<(), 
         .add_service(health_service)
         .add_service(auth::service(state))
         .add_service(users::service(state))
-        .add_service(contacts::service(state))
         .into_axum_router();
 
     let listener = tokio::net::TcpListener::bind(&settings.endpoint).await?;

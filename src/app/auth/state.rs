@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use bzd_lib::error::Error;
 use tokio::fs;
 
 use crate::app::{
@@ -7,25 +8,18 @@ use crate::app::{
         encoder::{Encoder, EncoderImpl},
         settings::AuthSettings,
     },
-    crypto::state::CryptoState,
     db::DbState,
-    error::AppError,
 };
 
 #[derive(Clone)]
 pub struct AuthState {
+    pub settings: AuthSettings,
     pub db: DbState,
-    pub crypto: CryptoState,
-    // pub settings: AuthSettings,
     pub encoder: Arc<dyn Encoder>,
 }
 
 impl AuthState {
-    pub async fn new(
-        settings: &AuthSettings,
-        db: DbState,
-        crypto: CryptoState,
-    ) -> Result<Self, AppError> {
+    pub async fn new(settings: &AuthSettings, db: DbState) -> Result<Self, Error> {
         let settings = settings.clone();
 
         let private_key = fs::read_to_string(&settings.private_key_file)
@@ -35,9 +29,8 @@ impl AuthState {
         let encoder = Arc::new(encoder);
 
         Ok(Self {
-            // settings,
+            settings,
             db,
-            crypto,
             encoder,
         })
     }

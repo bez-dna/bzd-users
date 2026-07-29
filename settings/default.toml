@@ -3,5 +3,9 @@
 [http]
 endpoint = "0.0.0.0:3000"
 
+[auth.rp]
+id = "bezdna.app"
+name = "BZD"
+
 [db]
 endpoint = "postgres://postgres:postgres@0.0.0.0:5432/bzd_users"

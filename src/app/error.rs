@@ -1,9 +1,3 @@
-use std::{
-    num::{ParseIntError, TryFromIntError},
-    string::FromUtf8Error,
-};
-
-use sea_orm::DbErr;
 use thiserror::Error;
 use tonic::Status;
 
@@ -12,15 +6,10 @@ impl From<AppError> for Status {
         // TODO: нужно добавить принт ошбики в debug уровень
 
         match error {
-            AppError::Validation(_) | AppError::VerificationCode => {
-                Self::invalid_argument(error.to_string())
-            }
+            AppError::Validation(_) => Self::invalid_argument(error.to_string()),
             AppError::NotFound => Self::not_found(error.to_string()),
-            AppError::Db(db_error) => match db_error {
-                DbErr::RecordNotFound(_) => Self::not_found(""),
-                _ => Self::internal(""),
-            },
-            _ => Self::internal(error.to_string()),
+            AppError::Forbidden => Self::permission_denied(error.to_string()),
+            AppError::Internal | AppError::Unreachable => Self::internal(error.to_string()),
         }
     }
 }
@@ -35,59 +24,39 @@ impl From<AppError> for Status {
 
 #[derive(Error, Debug)]
 pub enum AppError {
+    // Ok
     #[error("VALIDATION")]
     Validation(#[from] validator::ValidationErrors),
-    #[error("DB")]
-    Db(#[from] sea_orm::DbErr),
-    #[error("UUID")]
-    Uuid(#[from] uuid::Error),
-    #[error("AES")]
-    Aes,
     #[error("NOT_FOUND")]
     NotFound,
     #[error("FORBIDDEN")]
     Forbidden,
-    #[error("VERIFICATION_SEND")]
-    VerificationSend,
-    #[error("VERIFICATION_CODE")]
-    VerificationCode,
-    #[error("COMPLETE_NAME")]
-    CompleteName,
-    #[error("OTHER")]
-    Other,
+
+    // Ok
+    #[error("INTERNAL")]
+    Internal,
+    #[error("UNREACHABLE")]
+    Unreachable,
 }
 
-impl From<std::io::Error> for AppError {
-    fn from(_: std::io::Error) -> Self {
-        Self::Other
-    }
+// TODO: надо разобраться с этим поглууубже
+macro_rules! impl_from_other {
+    ($($err:ty),+ $(,)?) => {
+        $(
+            impl From<$err> for AppError {
+                fn from(_: $err) -> Self {
+                    Self::Internal
+                }
+            }
+        )+
+    };
 }
 
-impl From<TryFromIntError> for AppError {
-    fn from(_: TryFromIntError) -> Self {
-        Self::Other
-    }
-}
-
-impl From<ParseIntError> for AppError {
-    fn from(_: ParseIntError) -> Self {
-        Self::Other
-    }
-}
-
-impl From<FromUtf8Error> for AppError {
-    fn from(_: FromUtf8Error) -> Self {
-        Self::Other
-    }
-}
-
-impl From<jsonwebtoken::errors::Error> for AppError {
-    fn from(_: jsonwebtoken::errors::Error) -> Self {
-        Self::Other
-    }
-}
-impl From<reqwest::Error> for AppError {
-    fn from(_: reqwest::Error) -> Self {
-        Self::Other
-    }
-}
+impl_from_other!(
+    bzd_lib::error::Error,
+    uuid::Error,
+    serde_json::Error,
+    sea_orm::DbErr,
+    jsonwebtoken::errors::Error,
+    coset::CoseError,
+);
