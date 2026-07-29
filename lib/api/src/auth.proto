@@ -3,27 +3,28 @@ package bzd.users.auth;
 
 service AuthService {
     rpc Join(JoinRequest) returns (JoinResponse);
+    rpc Login(LoginRequest) returns (LoginResponse);
     rpc Complete(CompleteRequest) returns (CompleteResponse);
 }
 
 message JoinRequest {
-    optional int64 phone_number = 101;
+    optional string login = 101;
 }
 
 message JoinResponse {
-    optional bool is_new = 101;
+    optional string response = 101;
+}
 
-    optional Verification verification = 501;
+message LoginRequest {
+    optional string request = 101;
+}
 
-    message Verification {
-        optional string verification_id = 101;
-    }
+message LoginResponse {
+    optional string jwt = 101;
 }
 
 message CompleteRequest {
-    optional string verification_id = 101;
-    optional string code = 102;
-    optional string name = 103;
+    optional string request = 101;
 }
 
 message CompleteResponse {

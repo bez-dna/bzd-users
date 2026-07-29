@@ -228,7 +228,7 @@ mod get_user_users {
 
         fn try_from(req: GetUserUsersRequest) -> Result<Self, Self::Error> {
             Ok(Self {
-                user_id: req.user_id().parse()?,
+                user_id: req.user_id.ok_or(AppError::Forbidden)?.parse()?,
             })
         }
     }

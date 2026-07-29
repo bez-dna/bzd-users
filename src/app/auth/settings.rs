@@ -1,9 +1,13 @@
 use serde::Deserialize;
 
-use crate::app::auth::verification::VerificationSettings;
-
 #[derive(Deserialize, Clone)]
 pub struct AuthSettings {
-    pub verification: VerificationSettings,
+    pub rp: RPSettings,
     pub private_key_file: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct RPSettings {
+    pub id: String,
+    pub name: String,
 }

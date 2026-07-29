@@ -1,54 +1,29 @@
 use sea_orm::{
     ActiveModelTrait, ColumnTrait as _, ConnectionTrait, EntityTrait as _, IntoActiveModel as _,
-    ModelTrait as _, QueryFilter as _,
+    ModelTrait as _, QueryFilter as _, QuerySelect as _,
 };
 use uuid::Uuid;
 
 use crate::app::error::AppError;
 
 mod user;
-mod verification;
+mod user_challenge;
+mod user_credential;
 
-pub type VerificationModel = verification::Model;
 pub type UserModel = user::Model;
+pub type UserChallengeModel = user_challenge::Model;
+pub type UserCredentialModel = user_credential::Model;
 
-pub async fn create_verification<T: ConnectionTrait>(
+pub async fn get_user_by_id<T: ConnectionTrait>(
     db: &T,
-    model: VerificationModel,
-) -> Result<VerificationModel, AppError> {
-    let message = model.into_active_model().insert(db).await?;
-
-    Ok(message)
-}
-
-pub async fn find_verification_by_phone<T: ConnectionTrait>(
-    db: &T,
-    phone: Vec<u8>,
-) -> Result<Option<VerificationModel>, AppError> {
-    let verification = verification::Entity::find()
-        .filter(verification::Column::Phone.eq(phone))
+    user_id: Uuid,
+) -> Result<UserModel, AppError> {
+    let user = user::Entity::find_by_id(user_id)
         .one(db)
-        .await?;
+        .await?
+        .ok_or(AppError::NotFound)?;
 
-    Ok(verification)
-}
-
-pub async fn find_verification<T: ConnectionTrait>(
-    db: &T,
-    verification_id: Uuid,
-) -> Result<Option<VerificationModel>, AppError> {
-    Ok(verification::Entity::find_by_id(verification_id)
-        .one(db)
-        .await?)
-}
-
-pub async fn delete_verification<T: ConnectionTrait>(
-    db: &T,
-    model: VerificationModel,
-) -> Result<(), AppError> {
-    model.delete(db).await?;
-
-    Ok(())
+    Ok(user)
 }
 
 pub async fn create_user<T: ConnectionTrait>(
@@ -59,15 +34,74 @@ pub async fn create_user<T: ConnectionTrait>(
 
     Ok(user)
 }
-
-pub async fn find_user_by_phone<T: ConnectionTrait>(
+pub async fn find_user_by_login_with_user_credentials<T: ConnectionTrait>(
     db: &T,
-    phone: Vec<u8>,
-) -> Result<Option<UserModel>, AppError> {
-    let user = user::Entity::find()
-        .filter(user::Column::Phone.eq(phone))
+    login: &String,
+) -> Result<Option<(UserModel, Vec<UserCredentialModel>)>, AppError> {
+    match user::Entity::find()
+        .filter(user::Column::Login.eq(login))
         .one(db)
-        .await?;
+        .await?
+    {
+        Some(user) => {
+            let user_credentials = user.find_related(user_credential::Entity).all(db).await?;
 
-    Ok(user)
+            Ok(Some((user, user_credentials)))
+        }
+        None => Ok(None),
+    }
+}
+
+pub async fn create_user_challenge<T: ConnectionTrait>(
+    db: &T,
+    model: UserChallengeModel,
+) -> Result<UserChallengeModel, AppError> {
+    let user_challenge = model.into_active_model().insert(db).await?;
+
+    Ok(user_challenge)
+}
+
+pub async fn get_user_challenge_with_lock<T: ConnectionTrait>(
+    db: &T,
+    challenge: &[u8],
+) -> Result<UserChallengeModel, AppError> {
+    let user_challenge = user_challenge::Entity::find()
+        .filter(user_challenge::Column::Challenge.eq(challenge))
+        .lock_exclusive()
+        .one(db)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(user_challenge)
+}
+
+pub async fn delete_user_challenge<T: ConnectionTrait>(
+    db: &T,
+    model: UserChallengeModel,
+) -> Result<(), AppError> {
+    model.delete(db).await?;
+
+    Ok(())
+}
+
+pub async fn create_user_credential<T: ConnectionTrait>(
+    db: &T,
+    model: UserCredentialModel,
+) -> Result<UserCredentialModel, AppError> {
+    let user_credential = model.into_active_model().insert(db).await?;
+
+    Ok(user_credential)
+}
+
+pub async fn get_user_credential<T: ConnectionTrait>(
+    db: &T,
+    credential_id: &[u8],
+) -> Result<UserCredentialModel, AppError> {
+    let user_credential = user_credential::Entity::find()
+        .filter(user_credential::Column::CredentialId.eq(credential_id))
+        .one(db)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    Ok(user_credential)
 }

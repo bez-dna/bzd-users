@@ -12,9 +12,8 @@ impl MigrationTrait for Migration {
             .create_table(
                 table_auto(Users::Table)
                     .col(uuid(Users::UserId).primary_key())
-                    .col(binary(Users::Phone))
-                    .col(text_null(Users::Name))
-                    .col(text_null(Users::Locale))
+                    .col(text(Users::Login))
+                    .col(text(Users::Name))
                     .to_owned(),
             )
             .await?;
@@ -22,10 +21,10 @@ impl MigrationTrait for Migration {
         manager
             .create_index(
                 Index::create()
-                    .name("users_phone_udx")
+                    .name("users_login_udx")
                     .unique()
                     .table(Users::Table)
-                    .col(Users::Phone)
+                    .col(Users::Login)
                     .to_owned(),
             )
             .await

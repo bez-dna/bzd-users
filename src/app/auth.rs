@@ -5,11 +5,11 @@ use grpc::GrpcAuthService;
 
 mod encoder;
 mod grpc;
+mod passkey;
 mod repo;
 mod service;
 pub mod settings;
 pub mod state;
-mod verification;
 
 pub fn service(state: &AppState) -> AuthServiceServer<GrpcAuthService> {
     AuthServiceServer::new(GrpcAuthService::new(state.auth.clone()))

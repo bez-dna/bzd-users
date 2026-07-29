@@ -4,26 +4,26 @@ use sea_orm_migration::prelude::*;
 pub enum Users {
     Table,
     UserId,
-    Phone,
+    Login,
     Name,
-    Locale,
 }
 
 #[derive(DeriveIden)]
-pub enum Verifications {
+pub enum UserChallenges {
     Table,
-    VerificationId,
-    Phone,
-    Code,
-    RequestId,
-}
-
-#[derive(DeriveIden)]
-pub enum Contacts {
-    Table,
-    ContactId,
+    UserChallengeId,
     UserId,
-    Phone,
+    Challenge,
+    Login,
     Name,
-    DeviceContactId,
+}
+
+#[derive(DeriveIden)]
+pub enum UserCredentials {
+    Table,
+    UserCredentialId,
+    UserId,
+    CredentialId,
+    PublicKey,
+    SignCount,
 }
